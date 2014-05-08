@@ -25,7 +25,7 @@ def load_genome(filename):
                 line = line.rstrip('\n')
                 genome_string += line
             genome = genome_string.split()
-    except IOError as e:
+    except IOError:
         print "Couldn't open file \"" + filename + "\". Exiting"
         sys.exit(1)
 
@@ -38,6 +38,7 @@ def create_lookup_table():
     within the genome
     """
 
+    print "Creating sequence lookup hash table..."
     lookup_table = {}
     key = list("AAAAAAAAAA")
     for c1 in alleles:
@@ -62,8 +63,7 @@ def create_lookup_table():
                                             key[9] = c10
                                             lookup_table[''.join(key)] = ""
 
-    print "Size of table: " + str(len(lookup_table))
-    print "Creating sequence lookup hash table..."
+    print "Created table of size: " + str(len(lookup_table))
 
     return lookup_table
 
