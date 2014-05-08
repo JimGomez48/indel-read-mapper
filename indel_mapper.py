@@ -12,7 +12,8 @@ def usage():
 
 def load_genome(filename):
     """
-    Loads the reference genome into main memory from the specified file
+    Loads a genome into main memory from the specified file.
+    Returns the genome as a list of alleles
     """
 
     genome_string = ""
@@ -24,7 +25,7 @@ def load_genome(filename):
                     continue
                 line = line.rstrip('\n')
                 genome_string += line
-            genome = genome_string.split()
+            genome = list(genome_string)
     except IOError:
         print "Couldn't open file \"" + filename + "\". Exiting"
         sys.exit(1)
@@ -32,37 +33,18 @@ def load_genome(filename):
     return genome
 
 
-def create_lookup_table():
+def create_lookup_table(genome, seq_length):
     """
     Creates a hash table to look up positions of allele sub-sequences of length 10
-    within the genome
+    within the genome. Returns a dictionary as the lookup hash-table.
     """
 
     print "Creating sequence lookup hash table..."
     lookup_table = {}
-    key = list("AAAAAAAAAA")
-    for c1 in alleles:
-        key[0] = c1
-        for c2 in alleles:
-            key[1] = c2
-            for c3 in alleles:
-                key[2] = c3
-                for c4 in alleles:
-                    key[3] = c4
-                    for c5 in alleles:
-                        key[4] = c5
-                        for c6 in alleles:
-                            key[5] = c6
-                            for c7 in alleles:
-                                key[6] = c7
-                                for c8 in alleles:
-                                    key[7] = c8
-                                    for c9 in alleles:
-                                        key[8] = c9
-                                        for c10 in alleles:
-                                            key[9] = c10
-                                            lookup_table[''.join(key)] = ""
-
+    # store all positions of 10'mers occuring in the genome
+    for i in range(0, len(genome) - seq_length):
+        sequence = ''.join(genome[i: i + seq_length])
+        lookup_table.setdefault(sequence, []).append(i)
     print "Created table of size: " + str(len(lookup_table))
 
     return lookup_table
@@ -77,7 +59,7 @@ ref_filename = sys.argv[1]
 reads_file_name = sys.argv[2]
 
 ref_genome = load_genome(ref_filename)
-hash_table = create_lookup_table()
+hash_table = create_lookup_table(ref_genome, 10)  # table with sequence length 10
 
 reads = []
 
