@@ -1,4 +1,4 @@
-__author__ = 'james'
+__author__ = 'James Gomez'
 
 import sys
 
@@ -7,7 +7,7 @@ alleles = "ACGT"
 
 
 def usage():
-    print "USAGE: " + sys.argv[0] + " <ref-genome file> <reads file>"
+    print "USAGE: " + sys.argv[0] + " <ref-genome file> <reads file> <match-thresh>"
 
 
 def error_die(msg):
@@ -98,36 +98,98 @@ def load_reads(filename):
     return name, reads
 
 
+def get_diff_list(sequence, ref_genome, position):
+    """
+    Returns a list containing the mismatches between the reads and ref genome.
+    Specifically, original allele, snp, position in reference
+    """
+    read_list = list(sequence)
+    ref_list = list(ref_genome[position:position+len(sequence)])
+    mismatches = list()
+    try:
+        if len(read_list) != len(ref_list):
+            return mismatches
+        for i in range(0, len(sequence)):
+            if read_list[i] != ref_list[i]:
+                mismatches.append([ref_list[i], read_list[i], position + i])
+    except Exception as e:
+        error_die("num_mismatches(): " + e.message)
+
+    return mismatches
+
+
+def get_num_mismatches(sequence, ref_genome, position):
+    characters = list(sequence)
+    num_mismatches = 0
+    for i in range(0, len(characters)):
+        if characters[i] != ref_genome[position + i]:
+            num_mismatches += 1
+
+    return num_mismatches
+
+def get_best_read_position(ref_genome, read, positions, thresh):
+    least = 100
+    best_pos = None
+    for p in positions:
+        num_mismatches = get_num_mismatches(read, ref_genome, p)
+        if num_mismatches < thresh:
+            if num_mismatches < least:
+                least = num_mismatches
+                best_pos = p
+
+    return best_pos
+
+
 def main():
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 4:
         usage()
         sys.exit(1)
 
     ref_filename = sys.argv[1]
     reads_filename = sys.argv[2]
+    threshold = sys.argv[3]
 
     ref_name, ref_genome = load_genome(ref_filename)
     reads_name, reads = load_reads(reads_filename)
-    lookup_table = create_lookup_table(ref_genome, 10)  # table with sequence length 10
+    if ref_name != reads_name:
+        error_die("Reference genome id and reads genome id do not match")
+    lookup_table = create_lookup_table(ref_genome, 10)  # table with seq length 10
 
-    print "Mapping reads to reference..."
+    read_map = []
+    snps = {}
+
+    print "Mapping reads..."
     for read in reads:
-        subsequences = []
-        try:
-            subsequences.append(read[0:10])
-            subsequences.append(read[10:20])
-            subsequences.append(read[20:30])
-            subsequences.append(read[30:40])
-            subsequences.append(read[40:50])
-            for s in subsequences:
-                try:
-                    positions = lookup_table[s]
-                    print s + ":" + str(positions)
-                except KeyError:
-                    print "KEY NOT FOUND"
+        sub_sequences = [
+            read[0:10],
+            read[10:20],
+            read[20:30],
+            read[30:40],
+            read[40:50]
+        ]
+
+        positions = []
+        for s in sub_sequences:
+            try:
+                positions = lookup_table[s]  # throws key error if not in table
+            except KeyError:
+                continue
+            if len(positions) > 0:
+                best_pos = get_best_read_position(ref_genome, read, positions, threshold)
+                if best_pos is None:
                     continue
-        except Exception as e:
-            error_die(e.message)
+                for i in range(best_pos, best_pos + len(read)):
+                    read_map[best_pos] = read[i]
+
+    ans_key_name = "myanswers.txt"
+    print "writing answer key to \'" + ans_key_name + "\'..."
+    with open(ans_key_name, "w") as my_answer_file:
+        my_answer_file.write(">" + ref_name + "\n")
+        my_answer_file.write(">SNP\n")
+        keys = snps.keys()
+        for k in keys:
+            m = snps[k]
+            my_answer_file.write("1," + str(m[0]) + "," + str(m[1]) + "," + str(k) + "\n")
 
     print "DONE"
 
