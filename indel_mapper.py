@@ -244,8 +244,6 @@ def main():
                 # read map
                 read_alleles = read_map[i]  # throws key error if bad key
                 winner = get_consensus_allele(read_alleles)
-                print winner
-                print read_alleles
                 if winner != ref_allele:  # if not the same, it's a SNP
                     answer_file.write("1," + str(ref_allele) + "," + str(winner) + "," + str(i) + "\n")
             except KeyError:
