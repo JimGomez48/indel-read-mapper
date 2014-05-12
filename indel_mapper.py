@@ -1,9 +1,10 @@
 __author__ = 'James Gomez'
 
 import sys
+from math import *
 
 
-alleles = "ACGT"
+allele_alphabet = "ACGT"
 
 
 def usage():
@@ -58,7 +59,7 @@ def create_lookup_table(genome, seq_length):
     # store all positions of all 10'mers occuring in the genome
     for i in range(0, len(genome) - seq_length + 1):
         sequence = ''.join(genome[i: i + seq_length])
-        lookup_table.setdefault(sequence, []).append(i)
+        lookup_table.setdefault(sequence, []).append(int(i))
         if len(sequence) != 10:
             print ("ERROR: sequence " + str(i) + "not of length 10")
             print "Exiting..."
@@ -98,20 +99,21 @@ def load_reads(filename):
     return name, reads
 
 
-def get_diff_list(sequence, ref_genome, position):
+def find_snps(sequence, ref_genome, position):
     """
-    Returns a list containing the mismatches between the reads and ref genome.
-    Specifically, original allele, snp, position in reference
+    Returns a list containing the mismatches between the reads and ref genome, or
+    None if no SNPs are found
+    Specifically: [original allele, snp, position in reference]
     """
-    read_list = list(sequence)
+    seq_list = list(sequence)
     ref_list = list(ref_genome[position:position+len(sequence)])
     mismatches = list()
     try:
-        if len(read_list) != len(ref_list):
-            return mismatches
-        for i in range(0, len(sequence)):
-            if read_list[i] != ref_list[i]:
-                mismatches.append([ref_list[i], read_list[i], position + i])
+        if len(seq_list) != len(ref_list):
+            return None
+        for i in range(0, len(seq_list)):
+            if seq_list[i] != ref_list[i]:
+                mismatches.append([ref_list[i], seq_list[i], position + i])
     except Exception as e:
         error_die("num_mismatches(): " + e.message)
 
@@ -119,77 +121,135 @@ def get_diff_list(sequence, ref_genome, position):
 
 
 def get_num_mismatches(sequence, ref_genome, position):
+    """
+    Returns the number of mismatches between the reference genome starting at the
+    specified position and the given sequence
+    """
     characters = list(sequence)
     num_mismatches = 0
     for i in range(0, len(characters)):
+        if position + i >= len(ref_genome):
+            break
         if characters[i] != ref_genome[position + i]:
             num_mismatches += 1
 
     return num_mismatches
 
+
 def get_best_read_position(ref_genome, read, positions, thresh):
+    """
+    Maps the given read to the best position in the reference genome, if possible.
+    Returns the best matching position in the reference genome, or None if no match
+    is found
+    """
     least = 100
     best_pos = None
     for p in positions:
         num_mismatches = get_num_mismatches(read, ref_genome, p)
-        if num_mismatches < thresh:
-            if num_mismatches < least:
+        if num_mismatches < thresh and num_mismatches < least:
                 least = num_mismatches
                 best_pos = p
 
     return best_pos
 
 
+def get_consensus_allele(alleles):
+    """
+    Returns the allele with the highest count
+    """
+    allele_counts = {}
+    for a in alleles:
+        assert a in allele_alphabet
+        try:
+            allele_counts[a] += 1
+        except KeyError:
+            allele_counts[a] = 1
+
+    keys = allele_counts.keys()
+    win_count = 0
+    winner = None
+    for k in keys:
+        if allele_counts[k] > win_count:
+            winner = k
+            win_count = allele_counts[k]
+
+    return winner
+
+
 def main():
+    # ALGORITHM VARIABLES
+    hash_key_length = 10
+
+
+    # ensure correct number of arguments
     if len(sys.argv) < 4:
         usage()
         sys.exit(1)
 
     ref_filename = sys.argv[1]
     reads_filename = sys.argv[2]
-    threshold = sys.argv[3]
+    thresh = int(sys.argv[3])
 
     ref_name, ref_genome = load_genome(ref_filename)
     reads_name, reads = load_reads(reads_filename)
     if ref_name != reads_name:
         error_die("Reference genome id and reads genome id do not match")
-    lookup_table = create_lookup_table(ref_genome, 10)  # table with seq length 10
-
-    read_map = []
-    snps = {}
+    lookup_table = create_lookup_table(ref_genome, hash_key_length)  # table with seq length 10
 
     print "Mapping reads..."
+    read_map = {}
     for read in reads:
-        sub_sequences = [
-            read[0:10],
-            read[10:20],
-            read[20:30],
-            read[30:40],
-            read[40:50]
-        ]
-
+        # subdivide the read into smaller sub-sequences for perfect-match hashing
+        # then collect the candidate positions of the read in a list
         positions = []
-        for s in sub_sequences:
+        for start_pos in range(0, len(read), 10):
+            # don't use non-full-length sub seqs from end of read
+            if start_pos + hash_key_length > len(read):
+                continue
+
+            sub_sequence = read[start_pos: start_pos + hash_key_length]
+
             try:
-                positions = lookup_table[s]  # throws key error if not in table
+                temp_pos = lookup_table[sub_sequence]  # throws key error if no key
+                for p in temp_pos:
+                    positions.append(int(p) - int(start_pos))
             except KeyError:
                 continue
-            if len(positions) > 0:
-                best_pos = get_best_read_position(ref_genome, read, positions, threshold)
-                if best_pos is None:
-                    continue
-                for i in range(best_pos, best_pos + len(read)):
-                    read_map[best_pos] = read[i]
 
-    ans_key_name = "myanswers.txt"
-    print "writing answer key to \'" + ans_key_name + "\'..."
-    with open(ans_key_name, "w") as my_answer_file:
-        my_answer_file.write(">" + ref_name + "\n")
-        my_answer_file.write(">SNP\n")
-        keys = snps.keys()
-        for k in keys:
-            m = snps[k]
-            my_answer_file.write("1," + str(m[0]) + "," + str(m[1]) + "," + str(k) + "\n")
+        # find the best matching position for the read from the list of candidate
+        # positions, i.e. find the position that minimizes the error between the read
+        # and the corresponding sub-sequence in the reference genome. Then store it
+        # in the read map, or continue if no position satisfies the threshold
+        read_position = get_best_read_position(ref_genome, read, positions, thresh)
+        if not read_position is None:
+            for i in range(0, len(read)):
+                # if read_map[i] is None:
+                #     read_map[read_position + i] = []
+                try:
+                    read_map[read_position + i].append(str(read[i]))
+                except KeyError:
+                    read_map[read_position + i] = [str(read[i])]
+
+    # Use the consensus algorithm to determine SNPs relative to the reference genome
+    # Write the SNPs to the answer file
+    print "Finding SNPs..."
+    answer_file_name = "myanswers.txt"
+    with open(answer_file_name, "w") as answer_file:
+        answer_file.write(">" + ref_name + "\n")
+        answer_file.write(">SNP" + "\n")
+        for i in range(0, len(ref_genome)):
+            ref_allele = ref_genome[i]
+            try:
+                # count how many of each allele appears in the current position of the
+                # read map
+                read_alleles = read_map[i]  # throws key error if bad key
+                winner = get_consensus_allele(read_alleles)
+                print winner
+                print read_alleles
+                if winner != ref_allele:  # if not the same, it's a SNP
+                    answer_file.write("1," + str(ref_allele) + "," + str(winner) + "," + str(i) + "\n")
+            except KeyError:
+                continue
 
     print "DONE"
 
