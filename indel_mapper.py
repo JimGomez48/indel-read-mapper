@@ -42,31 +42,11 @@ def load_genome(filename):
     return name, genome
 
 
-def create_lookup_table(genome, seq_length):
+def load_reads(filename, paired_end):
     """
-    Creates a hash table to look up positions of allele sub-sequences of specified
-    length within the genome. Returns a dictionary as the lookup hash-table, with
-    string sub-sequences as keys and a list of positions as the values
-    """
-    print "Creating sequence lookup hash table..."
-    lookup_table = {}
-    # store all positions of all 10'mers occuring in the genome
-    for i in range(0, len(genome) - seq_length + 1):
-        sequence = ''.join(genome[i: i + seq_length])
-        lookup_table.setdefault(sequence, []).append(int(i))
-        if len(sequence) != 10:
-            print ("ERROR: sequence " + str(i) + "not of length 10")
-            print "Exiting..."
-            sys.exit(1)
-    print "Created table of size: " + str(len(lookup_table))
-
-    return lookup_table
-
-
-def load_reads(filename):
-    """
-    Loads the reads file into main memory as a list. Returns the list of single reads
-    and the name of the genome corresponding to the reads
+    Loads the reads file into main memory as a either list of single reads or a list
+    of paired-end reads, depending on the 'paired-end' flag. Returns the list
+    and the name of the genome corresponding to the reads.
     """
     reads = []
     with open(filename, "r") as reads_file:
@@ -84,10 +64,36 @@ def load_reads(filename):
                 continue
             line = line.rstrip("\r\n")
             lines = line.split(",")
-            reads.append(lines[0])
-            reads.append(lines[1])
+            if paired_end:
+                reads.append([lines[0], lines[1]])
+            else:
+                reads.append(lines[0])
+                reads.append(lines[1])
 
     return name, reads
+
+
+def create_lookup_table(genome, seq_length):
+    """
+    Creates a hash table to look up positions of allele sub-sequences of specified
+    length within the genome. Returns a dictionary as the lookup hash-table, with
+    string sub-sequences as keys and a list of positions as the values
+    """
+    print "Creating sequence lookup hash table..."
+    lookup_table = {}
+    # store all positions of all 10'mers occuring in the genome
+    for i in range(0, len(genome) - seq_length + 1):
+        sequence = ''.join(genome[i: i + seq_length])
+        lookup_table.setdefault(sequence, []).append(int(i))
+        if len(sequence) != 10:
+            raise Exception("sub-sequence " + str(i) + " is not of length 10")
+
+    print "Created table of size: " + str(len(lookup_table))
+    return lookup_table
+
+
+def create_read_map(reads, lookup_table):
+    pass
 
 
 def find_snps(sequence, ref_genome, position):
@@ -180,7 +186,7 @@ def main():
     thresh = int(sys.argv[3])
 
     ref_name, ref_genome = load_genome(ref_filename)
-    reads_name, reads = load_reads(reads_filename)
+    reads_name, reads = load_reads(reads_filename, paired_end=False)
     if ref_name != reads_name:
         error_die("Reference genome id and reads genome id do not match")
     lookup_table = create_lookup_table(ref_genome, hash_key_length)  # table with seq length 10
