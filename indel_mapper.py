@@ -16,10 +16,10 @@ def error_die(msg):
     sys.exit(1)
 
 
-def load_genome(filename):
+def load_ref_genome(filename):
     """
-    Loads a genome into main memory from the specified file.
-    Returns genome as a list of alleles and the name of the genome
+    Loads a reference genome into main memory from the specified file.
+    Returns the genome as a list of alleles and the name of the genome
     """
     genome_string = ""
     with open(filename) as ref_file:
@@ -88,6 +88,15 @@ def load_reads(filename):
             reads.append(lines[1])
 
     return name, reads
+
+
+def map_reads(reads, lookup_table):
+    read_map = {}
+    for read in reads:
+        # TODO find the position that best fits this read to the reference
+        pass
+
+    return read_map
 
 
 def find_snps(sequence, ref_genome, position):
@@ -179,7 +188,7 @@ def main():
     reads_filename = sys.argv[2]
     thresh = int(sys.argv[3])
 
-    ref_name, ref_genome = load_genome(ref_filename)
+    ref_name, ref_genome = load_ref_genome(ref_filename)
     reads_name, reads = load_reads(reads_filename)
     if ref_name != reads_name:
         error_die("Reference genome id and reads genome id do not match")
