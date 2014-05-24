@@ -22,28 +22,22 @@ def load_genome(filename):
     Returns genome as a list of alleles and the name of the genome
     """
     genome_string = ""
-    try:
-        with open(filename) as ref_file:
-            line = ref_file.next()
-            if not ">" in line:
-                raise Exception("First line of genome does not begin with \'>\'")
-            else:
-                name = str(line.translate(None, ">\r\n"))
-                print "Loading reference genome \'" + name + "\'..."
+    with open(filename) as ref_file:
+        line = ref_file.next()
+        if not ">" in line:
+            raise Exception("First line of genome does not begin with \'>\'")
+        else:
+            name = str(line.translate(None, ">\r\n"))
+            print "Loading reference genome \'" + name + "\'..."
 
-                for line in ref_file:
-                    if ">" in line:
-                        chr_name = line.translate(None, ">\r\n")
-                        print "\tLoading chromosome \'" + chr_name + "\'..."
-                        continue
-                    line = line.rstrip("\r\n")
-                    genome_string += line
-                genome = list(genome_string)
-    except IOError:
-        sys.stderr.write("Couldn't open file \"" + filename + "\". Exiting\n")
-        sys.exit(1)
-    except Exception as e:
-        error_die(e.message)
+            for line in ref_file:
+                if ">" in line:
+                    chr_name = line.translate(None, ">\r\n")
+                    print "\tLoading chromosome \'" + chr_name + "\'..."
+                    continue
+                line = line.rstrip("\r\n")
+                genome_string += line
+            genome = list(genome_string)
 
     return name, genome
 
@@ -75,26 +69,23 @@ def load_reads(filename):
     and the name of the genome corresponding to the reads
     """
     reads = []
-    try:
-        with open(filename, "r") as reads_file:
-            line = reads_file.next()
-            if not ">" in line:
-                raise Exception("First line of genome does not begin with \'>\'")
+    with open(filename, "r") as reads_file:
+        line = reads_file.next()
+        if not ">" in line:
+            raise Exception("First line of genome does not begin with \'>\'")
 
-            name = str(line.translate(None, ">\r\n"))
-            print "Loading reads from genome \'" + name + "\'..."
+        name = str(line.translate(None, ">\r\n"))
+        print "Loading reads from genome \'" + name + "\'..."
 
-            for line in reads_file:
-                if ">" in line:
-                    chr_name = line.translate(None, ">\r\n")
-                    print "\tChromosome \'" + chr_name + "\'..."
-                    continue
-                line = line.rstrip("\r\n")
-                lines = line.split(",")
-                reads.append(lines[0])
-                reads.append(lines[1])
-    except Exception as e:
-        error_die(e.message)
+        for line in reads_file:
+            if ">" in line:
+                chr_name = line.translate(None, ">\r\n")
+                print "\tChromosome \'" + chr_name + "\'..."
+                continue
+            line = line.rstrip("\r\n")
+            lines = line.split(",")
+            reads.append(lines[0])
+            reads.append(lines[1])
 
     return name, reads
 
@@ -108,14 +99,13 @@ def find_snps(sequence, ref_genome, position):
     seq_list = list(sequence)
     ref_list = list(ref_genome[position:position+len(sequence)])
     mismatches = list()
-    try:
-        if len(seq_list) != len(ref_list):
-            return None
-        for i in range(0, len(seq_list)):
-            if seq_list[i] != ref_list[i]:
-                mismatches.append([ref_list[i], seq_list[i], position + i])
-    except Exception as e:
-        error_die("num_mismatches(): " + e.message)
+
+    if len(seq_list) != len(ref_list):
+        return None
+
+    for i in range(0, len(seq_list)):
+        if seq_list[i] != ref_list[i]:
+            mismatches.append([ref_list[i], seq_list[i], position + i])
 
     return mismatches
 
@@ -180,7 +170,6 @@ def main():
     # ALGORITHM VARIABLES
     hash_key_length = 10
 
-
     # ensure correct number of arguments
     if len(sys.argv) < 4:
         usage()
@@ -223,8 +212,6 @@ def main():
         read_position = get_best_read_position(ref_genome, read, positions, thresh)
         if not read_position is None:
             for i in range(0, len(read)):
-                # if read_map[i] is None:
-                #     read_map[read_position + i] = []
                 try:
                     read_map[read_position + i].append(str(read[i]))
                 except KeyError:
