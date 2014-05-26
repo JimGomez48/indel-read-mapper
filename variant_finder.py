@@ -242,6 +242,16 @@ def find_snps(answer_file, ref_genome, ref_name, read_map):
             continue
 
 
+def find_insertions():
+    # TODO
+    pass
+
+
+def find_deletions():
+    # TODO
+    pass
+
+
 def needleman_wunsch_align(seq1, seq2):
     """
     Complexity: O(len(seq1*len(seq2))
@@ -250,6 +260,10 @@ def needleman_wunsch_align(seq1, seq2):
     :param seq2:
     :return:
     """
+    gap_score = -2
+    match_score = 1
+    mismatch_score = -1
+
     rows = len(seq1) + 1
     cols = len(seq2) + 1
     matrix = []
@@ -261,23 +275,37 @@ def needleman_wunsch_align(seq1, seq2):
 
     #initialize first column
     for row in range(rows):
-        matrix[row][0] = -row
+        matrix[row][0] = row * gap_score
 
     #initalize first row
     for col in range(cols):
-        matrix[0][col] = -col
+        matrix[0][col] = col * gap_score
 
     for row in range(1, rows):
         for col in range(1, cols):
-            top = matrix[row - 1][col]
-            top_left = matrix[row - 1][col - 1]
-            left = matrix[row][col - 1]
+            diag = matrix[row - 1][col - 1]     # MATCH
+            top = matrix[row - 1][col]          # DELETE
+            left = matrix[row][col - 1]         # INSERT
             if seq1[row - 1] == seq2[col - 1]:
-                char_score = 1
+                diag_score = match_score
             else:
-                char_score = -1
-            max_val = max(top - 1, top_left + char_score, left - 1)
+                diag_score = mismatch_score
+            max_val = max(top + gap_score, diag + diag_score, left + gap_score)
             matrix[row][col] = max_val
+
+    # for i in range (0, len(seq1)):
+    #   for j in range (0, len(seq2)):
+    #     Match = matrix[i-1][j-1] + S(Ai, Bj)
+    #     Delete = matrix[i-1][j] + d
+    #     Insert = matrix[i][j-1] + d
+    #     matrix[i][j] = max(Match, Insert, Delete)
+
+    # Print matrix to console
+    # for i in range(1, rows):
+    #     sys.stdout.write("[")
+    #     for j in range(1, cols):
+    #         sys.stdout.write(str(matrix[i][j]) + " ")
+    #     sys.stdout.write("]\n")
 
     return matrix[rows - 1][cols - 1]
 
