@@ -4,11 +4,14 @@ import sys
 from math import *
 
 from paired_end_read import PairedEndRead
+from sequence_aligner import SequenceAligner
 import Eval
+
 
 
 allele_alphabet = "ACGT"
 answer_file_name = "myanswers.txt"
+seq_aligner = SequenceAligner()
 
 
 def usage():
@@ -293,19 +296,18 @@ def needleman_wunsch_align(seq1, seq2):
             max_val = max(top + gap_score, diag + diag_score, left + gap_score)
             matrix[row][col] = max_val
 
+    for row in range(1, rows):
+        for col in range(1, cols):
+            pass
+
+    seq_aligner.align(seq1, seq2)
+
     # for i in range (0, len(seq1)):
     #   for j in range (0, len(seq2)):
     #     Match = matrix[i-1][j-1] + S(Ai, Bj)
     #     Delete = matrix[i-1][j] + d
     #     Insert = matrix[i][j-1] + d
     #     matrix[i][j] = max(Match, Insert, Delete)
-
-    # Print matrix to console
-    # for i in range(1, rows):
-    #     sys.stdout.write("[")
-    #     for j in range(1, cols):
-    #         sys.stdout.write(str(matrix[i][j]) + " ")
-    #     sys.stdout.write("]\n")
 
     return matrix[rows - 1][cols - 1]
 
