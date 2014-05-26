@@ -6,9 +6,9 @@ import sys
 class SequenceAligner:
 
     class MatrixEntry:
-        def __init__(self, score=0, parents=[]):
+        def __init__(self, score=0, parent=None):
             self.score = score
-            self.parents = parents
+            self.parent = parent
 
     def __init__(self):
         self.matrix = []
@@ -49,18 +49,24 @@ class SequenceAligner:
         # Generate scores and parent pointers
         for row in range(1, rows):
             for col in range(1, cols):
-                diag_score = self.matrix[row - 1][col - 1].score     # MATCH
-                top_score = self.matrix[row - 1][col].score          # DELETE
-                left_score = self.matrix[row][col - 1].score         # INSERT
+                diag_score = self.matrix[row - 1][col - 1].score          # MATCH
+                top_score = self.matrix[row - 1][col].score + gap_score   # DELETE
+                left_score = self.matrix[row][col - 1].score + gap_score  # INSERT
                 if seq1[row - 1] == seq2[col - 1]:
                     diag_score += match_score
                 else:
                     diag_score += mismatch_score
-                self.matrix[row][col].score = max(
-                    top_score + gap_score,
-                    diag_score,
-                    left_score + gap_score
-                )
+
+                best_score = max(top_score, diag_score, left_score)
+                if best_score == top_score:
+                    self.matrix[row][col].score = top_score
+                    self.matrix[row][col].parent = self.matrix[row - 1][col]
+                elif best_score == left_score:
+                    self.matrix[row][col].score = left_score
+                    self.matrix[row][col].parent = self.matrix[row][col - 1]
+                else:
+                    self.matrix[row][col].score = diag_score
+                    self.matrix[row][col].parent = self.matrix[row - 1][col - 1]
 
         self.__print_matrix__()
 
