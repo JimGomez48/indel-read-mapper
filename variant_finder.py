@@ -11,6 +11,7 @@ import Eval
 
 allele_alphabet = "ACGT"
 answer_file_name = "myanswers.txt"
+answer_key_name = "ans_genome_test.txt"
 seq_aligner = SequenceAligner()
 
 
@@ -300,7 +301,7 @@ def needleman_wunsch_align(seq1, seq2):
         for col in range(1, cols):
             pass
 
-    seq_aligner.align(seq1, seq2)
+    # seq_aligner.align(seq1, seq2)
 
     # for i in range (0, len(seq1)):
     #   for j in range (0, len(seq2)):
@@ -347,7 +348,7 @@ def main():
 
 def eval():
     studentAns = open(answer_file_name, "r")
-    answerKey = open("ans_genomeW1.txt", "r")
+    answerKey = open(answer_key_name, "r")
     test = Eval.Eval(answerKey, studentAns)
     for key in test:
         print key + ' grade: ' + str(test[key])
