@@ -31,30 +31,38 @@ class SequenceAligner:
         while i > 0 or j > 0:
             current = self.matrix[i][j]
             next = current.parent
-            if i > 0 and j > 0 and next == self.MatrixEntry.DIAG:
-                ref_align += ref_seq[i - 2]
-                test_align += test_seq[j - 2]
+
+            if next is None:
+                if i == 0:
+                    ref_align += '-'
+                    test_align += test_seq[j - 1]
+                    j -= 1
+                elif j == 0:
+                    ref_align += ref_seq[i - 1]
+                    test_align += '-'
+                    i -= 1
+            elif i > 0 and j > 0 and next == self.MatrixEntry.DIAG:
+                ref_align += ref_seq[i - 1]
+                test_align += test_seq[j - 1]
                 i -= 1
                 j -= 1
             elif i > 0 and next == self.MatrixEntry.UP:
                 # UP
-                ref_align += ref_seq[i - 2]
+                ref_align += ref_seq[i - 1]
                 test_align += "-"
                 i -= 1
             elif j > 0 and next == self.MatrixEntry.LEFT:
                 # LEFT
                 ref_align += "-"
-                test_align += ref_seq[j - 2]
+                test_align += test_seq[j - 1]
                 j -= 1
-            else:
-                pass
-
-
 
         ref_align = ref_align[::-1]
         test_align = test_align[::-1]
-        print ref_align
-        print test_align
+        print "ref-align:  " + ref_align
+        print "test-align: " + test_align
+
+        return ref_align, test_align
 
     def __needleman_wunsch_matrix__(self, ref_seq, test_seq):
         """
