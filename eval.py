@@ -558,17 +558,11 @@ def Eval(answerKey, studentAns):
               'STR': strGrade, 'ALU': aluGrade, 'ASS':assGrade}
     return grades
 
+
 def main():
-    # studentAns = open("test_greedyprim_genomeCPSTR.txt", "r")
-    # answerKey = open("ans_genomeCPSTR.txt", "r")
-    # test= Eval(answerKey,studentAns)
-    # for key in test:
-    #     print key + ' grade: ' + str(test[key])
-    studentAns = open(sys.argv[1], "r")
-    answerKey = open(sys.argv[2], "r")
-    test = Eval(answerKey, studentAns)
-    # for key in test:
-    #     print key + ' grade: ' + str(test[key])
+    student_ans = open(sys.argv[1], "r")
+    answer_key = open(sys.argv[2], "r")
+    Eval(answer_key, student_ans)
 
 
 if __name__ == '__main__':

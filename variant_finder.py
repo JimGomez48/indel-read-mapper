@@ -101,11 +101,11 @@ def create_lookup_table(genome, seq_length):
         # if len(sequence) != 10:
         #     raise Exception("sub-sequence " + str(i) + " is not of length 10")
 
-    print "Created table of size: " + str(len(lookup_table))
+    print "\tCreated table of size: " + str(len(lookup_table))
     return lookup_table
 
 
-def create_read_map(ref_genome, reads, lookup_table, subseq_length, thresh):
+def map_reads(ref_genome, reads, lookup_table, subseq_length, thresh):
     print "Mapping reads..."
     read_length = 50
     read_map = {}
@@ -266,6 +266,7 @@ def main():
         usage()
         sys.exit(1)
 
+    print
     ref_filename = "ref_" + str(sys.argv[1]) + ".txt"
     reads_filename = "reads_" + str(sys.argv[1]) + ".txt"
 
@@ -276,7 +277,7 @@ def main():
     answer_key_name += (str(ref_name) + ".txt")
 
     lookup_table = create_lookup_table(ref_genome, seq_length)
-    read_map = create_read_map(
+    read_map = map_reads(
         ref_genome,
         reads,
         lookup_table,
@@ -293,13 +294,9 @@ def main():
 
 def run_eval():
     try:
-        student_ans = open(answer_file_name, "r")
-        answer_key = open(answer_key_name, "r")
-        test = eval.Eval(answer_key, student_ans)
-        for key in test:
-            print key + ' grade: ' + str(test[key])
-        student_ans.close()
-        answer_key.close()
+        with open(answer_file_name, "r") as student_ans:
+            with open(answer_key_name, "r") as answer_key:
+                eval.Eval(answer_key, student_ans)
     except IOError as e:
         sys.stderr.write("Couldn't open answer key \'" + answer_key_name + "\'\n")
         sys.stderr.write(e.message + "\n")
@@ -307,9 +304,6 @@ def run_eval():
 
 # RUN MAIN
 if __name__ == '__main__':
-    sequence_aligner.align(
-        ref_seq="TACTGGATGA",
-        test_seq="TTGGATGCTA"
-    )
+    # sequence_aligner.align(ref_seq="TACTGGATGA", test_seq="TTGGATGCTA")
     main()
     run_eval()
