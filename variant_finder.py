@@ -105,7 +105,7 @@ def create_lookup_table(genome, seq_length):
     return lookup_table
 
 
-def map_reads(ref_genome, reads, lookup_table, subseq_length, thresh):
+def map_reads(ref_genome, reads, lookup_table, subseq_length, min_score):
     print "Mapping reads..."
     read_length = 50
     read_map = {}
@@ -132,69 +132,75 @@ def map_reads(ref_genome, reads, lookup_table, subseq_length, thresh):
             except KeyError:
                 continue
 
+        # Find the best matching position for the read (max align score)
+        REF = 0
+        TEST = 1
+        SCORE = 2
+        best = (None, 0, 0)
+        best_pos = None
         for p in positions:
-            ref_align, read_align, score = seq_align.align(
+            current = seq_align.align(
                 ref_seq=ref_genome[p:p + len(read)],
                 test_seq=read,
                 local=True
             )
+            if current[SCORE] > best[SCORE] and current[SCORE] > min_score:
+                best = current
+                best_pos = p
 
-        # find the best matching position for the read from the list of candidate
-        # positions, i.e. find the position that minimizes the error between the read
-        # and the corresponding sub-sequence in the reference genome. Then store it
-        # in the read map, or continue if no position satisfies the threshold
-        read_position = get_best_read_position(ref_genome, read, positions, thresh)
-        if not read_position is None:
-            for i in range(0, read_length):
+        if not best_pos is None:
+            for i in range(0, len(best[TEST])):
+                if best[TEST][i] == '-':  # skip gaps
+                    continue
                 try:
-                    read_map[read_position + i].append(str(read[i]))
+                    read_map[best_pos + i].append(str(best[TEST][i]))
                 except KeyError:
-                    read_map[read_position + i] = [str(read[i])]
+                    read_map[best_pos + i] = [str(best[TEST][i])]
 
     return read_map
 
 
-def get_num_mismatches(sequence, ref_genome, position):
-    """
-    Returns the number of mismatches between the reference genome starting at the
-    specified position and the given sequence.
-    Complexity: O(len(sequence))
+# def get_num_mismatches(sequence, ref_genome, position):
+#     """
+#     Returns the number of mismatches between the reference genome starting at the
+#     specified position and the given sequence.
+#     Complexity: O(len(sequence))
+#
+#     :param sequence: the sub-sequence to test against the reference
+#     :param ref_genome: the reference genome to be tested against  the sequence
+#     :param position: the position in the reference to compare with the sequence
+#     """
+#     num_mismatches = 0
+#     for i in range(0, len(sequence)):
+#         if position + i >= len(ref_genome):
+#             break
+#         if sequence[i] != ref_genome[position + i]:
+#             num_mismatches += 1
+#
+#     return num_mismatches
 
-    :param sequence: the sub-sequence to test against the reference
-    :param ref_genome: the reference genome to be tested against  the sequence
-    :param position: the position in the reference to compare with the sequence
-    """
-    num_mismatches = 0
-    for i in range(0, len(sequence)):
-        if position + i >= len(ref_genome):
-            break
-        if sequence[i] != ref_genome[position + i]:
-            num_mismatches += 1
 
-    return num_mismatches
-
-
-def get_best_read_position(ref_genome, read, positions, max_mismatches):
-    """
-    Maps the given read to the best position in the reference genome, if possible.
-    Returns the best matching position in the reference genome, or None if no match
-    is found.
-    Complexity: O(m*n) m is number of positions, n is the length of the read
-
-    :param ref_genome: the reference genome
-    :param read: the read to be mapped to the reference
-    :param positions: the positions in the reference genome to test the read against
-    :param max_mismatches: the max allowed mismatches
-    """
-    least = 100
-    best_pos = None
-    for p in positions:
-        num_mismatches = get_num_mismatches(read, ref_genome, p)
-        if num_mismatches < max_mismatches and num_mismatches < least:
-            least = num_mismatches
-            best_pos = p
-
-    return best_pos
+# def get_best_read_position(ref_genome, read, positions, max_mismatches):
+#     """
+#     Maps the given read to the best position in the reference genome, if possible.
+#     Returns the best matching position in the reference genome, or None if no match
+#     is found.
+#     Complexity: O(m*n) m is number of positions, n is the length of the read
+#
+#     :param ref_genome: the reference genome
+#     :param read: the read to be mapped to the reference
+#     :param positions: the positions in the reference genome to test the read against
+#     :param max_mismatches: the max allowed mismatches
+#     """
+#     least = 100
+#     best_pos = None
+#     for p in positions:
+#         num_mismatches = get_num_mismatches(read, ref_genome, p)
+#         if num_mismatches < max_mismatches and num_mismatches < least:
+#             least = num_mismatches
+#             best_pos = p
+#
+#     return best_pos
 
 
 def get_consensus_allele(alleles):
@@ -222,7 +228,7 @@ def get_consensus_allele(alleles):
     return winner
 
 
-def find_snps(answer_file, ref_genome, ref_name, read_map):
+def find_snps(answer_file, ref_genome, ref_name, read_map, thresh=0.6):
     """
     Finds SNPs with respect to the reference genome and writes the SNPs to the answer
     file.
@@ -235,6 +241,7 @@ def find_snps(answer_file, ref_genome, ref_name, read_map):
     """
     # Use the consensus algorithm to determine SNPs relative to the reference genome
     # Write the SNPs to the answer file
+    # TODO use the thresh param
     print "Finding SNPs..."
     answer_file.write(">" + ref_name + "\n")
     answer_file.write(">SNP" + "\n")
@@ -253,21 +260,19 @@ def find_snps(answer_file, ref_genome, ref_name, read_map):
             continue
 
 
-def find_insertions():
-    # TODO
-    pass
+def find_indels(seq1, seq2):
+    inserts = []
+    deletes = []
 
-
-def find_deletions():
-    # TODO
-    pass
+    return inserts, deletes
 
 
 def main():
     # ALGORITHM VARIABLES
     global answer_key_name
     seq_length = 10
-    snp_thresh = 2
+    min_align_score = 0.95
+    snp_thresh = 0.6
     paired_end = False
 
     # ensure correct number of arguments
@@ -291,11 +296,17 @@ def main():
         reads,
         lookup_table,
         subseq_length=seq_length,
-        thresh=snp_thresh
+        min_score=min_align_score
     )
 
     with open(answer_file_name, "w") as answer_file:
-        find_snps(answer_file, ref_genome, ref_name, read_map)
+        find_snps(
+            answer_file,
+            ref_genome,
+            ref_name,
+            read_map,
+            thresh=snp_thresh
+        )
         # TODO find indels
 
     print "DONE\n"
