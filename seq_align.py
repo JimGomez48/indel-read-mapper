@@ -13,17 +13,33 @@ class MatrixEntry:
         self.parent = parent
 
 
-def align(ref_seq, test_seq):
+def align(ref_seq, test_seq, local=False):
     """
-    Uses the Needleman-Wunsch alignment algorithm to align the two sequences with
-    minimal errors.
+    Aligns the two sequences with minimal error. If local=True, uses the
+    Waterman-Smith local-alignment algorithm. Otherwise, uses the Needleman-Wunsch
+    global-alignment algorithm
 
-    Cubic time algorithm
+    both Cubic time  O(n^3)
     """
-    matrix, score = __needleman_wunsch_matrix__(ref_seq, test_seq)
-    if matrix is None:
-        return matrix
+    if local:
+        matrix, score = __smith_waterman__(ref_seq, test_seq)
+    else:
+        matrix, score = __needleman_wunsch__(ref_seq, test_seq)
 
+    ref_align, test_align = __align__(matrix, ref_seq=ref_seq, test_seq=test_seq)
+
+    score = float(score) / len(ref_align)  # Normalize the score
+    # if 30 < score < 50:
+    # if 0.5 < score < 1.0:
+    #     print "ref-align:  " + ref_align
+    #     print "test-align: " + test_align
+    #     print "score: " + str(score)
+    #     print
+
+    return ref_align, test_align, score
+
+
+def __align__(matrix, ref_seq, test_seq):
     # perform alignment
     ref_align = ""
     test_align = ""
@@ -60,17 +76,14 @@ def align(ref_seq, test_seq):
 
     ref_align = ref_align[::-1]
     test_align = test_align[::-1]
-    score = float(score) / len(ref_align)  # Normalize the score
-    print "ref-align:  " + ref_align
-    print "test-align: " + test_align
-    print "score: " + str(score)
-    print
 
-    return ref_align, test_align, score
+    return ref_align, test_align
 
 
-def __needleman_wunsch_matrix__(ref_seq, test_seq):
+def __needleman_wunsch__(ref_seq, test_seq):
     """
+    Calculates the global alignment matrix
+
     Complexity: O(len(seq1*len(seq2))
     """
     match_score = 1
@@ -118,6 +131,64 @@ def __needleman_wunsch_matrix__(ref_seq, test_seq):
                 matrix[row][col].parent = MatrixEntry.LEFT
             else:                           # DELETE
                 matrix[row][col].score = top_score
+                matrix[row][col].parent = MatrixEntry.UP
+    # print_matrix(matrix)
+    align_score = matrix[rows - 1][cols - 1].score
+
+    return matrix, align_score
+
+
+def __smith_waterman__(ref_seq, test_seq):
+    """
+    Calculates the local alignment matrix
+
+    Complexity: O(len(seq1*len(seq2))
+    """
+    match_score = 1
+    mismatch_score = -1
+    gap_score = -1
+
+    rows = len(ref_seq) + 1
+    cols = len(test_seq) + 1
+    matrix = []
+
+    # Create the matrix
+    for row in range(0, rows):
+        matrix.append(list())
+        for col in range(cols):
+            matrix[row].append(MatrixEntry())
+    # print_matrix(matrix)
+
+    # Initialize first column
+    for row in range(0, rows):
+        matrix[row][0].score = 0
+    # print_matrix(matrix)
+
+    # Initialize first row
+    for col in range(0, cols):
+        matrix[0][col].score = 0
+    # print_matrix(matrix)
+
+    # Generate scores and parent pointers
+    for row in range(1, rows):
+        for col in range(1, cols):
+            diag_score = matrix[row - 1][col - 1].score          # MATCH
+            top_score = matrix[row - 1][col].score + gap_score   # DELETE
+            left_score = matrix[row][col - 1].score + gap_score  # INSERT
+            if ref_seq[row - 1] == test_seq[col - 1]:
+                diag_score += match_score
+            else:
+                diag_score += mismatch_score
+
+            best_score = max(top_score, diag_score, left_score)
+            if best_score == diag_score:    # MATCH
+                matrix[row][col].score = max(0, diag_score)
+                matrix[row][col].parent = MatrixEntry.DIAG
+            elif best_score == left_score:  # INSERT
+                matrix[row][col].score = max(0, left_score)
+                matrix[row][col].parent = MatrixEntry.LEFT
+            else:                           # DELETE
+                matrix[row][col].score = max(0, top_score)
                 matrix[row][col].parent = MatrixEntry.UP
     # print_matrix(matrix)
     align_score = matrix[rows - 1][cols - 1].score

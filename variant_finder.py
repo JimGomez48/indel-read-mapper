@@ -4,7 +4,7 @@ import sys
 from math import *
 
 from paired_end_read import PairedEndRead
-import sequence_aligner
+import seq_align
 import eval
 
 
@@ -115,7 +115,8 @@ def map_reads(ref_genome, reads, lookup_table, subseq_length, thresh):
 
         # subdivide the read into smaller sub-sequences for perfect-match hashing
         # then collect the candidate positions of the read in a list
-        positions = []
+        # positions = []
+        positions = set()
         for start_pos in range(0, read_length, subseq_length):
             # don't use non-full-length sub seqs from end of read
             if start_pos + subseq_length > read_length:
@@ -126,9 +127,17 @@ def map_reads(ref_genome, reads, lookup_table, subseq_length, thresh):
             try:
                 temp_pos = lookup_table[sub_sequence]  # throws key error if no key
                 for p in temp_pos:
-                    positions.append(int(p) - int(start_pos))
+                    # positions.append(int(p) - int(start_pos))
+                    positions.add(int(p) - int(start_pos))
             except KeyError:
                 continue
+
+        for p in positions:
+            ref_align, read_align, score = seq_align.align(
+                ref_seq=ref_genome[p:p + len(read)],
+                test_seq=read,
+                local=True
+            )
 
         # find the best matching position for the read from the list of candidate
         # positions, i.e. find the position that minimizes the error between the read

@@ -69,16 +69,16 @@ def generate_ref_genome(genome_id, num_chromosomes, length_chromosome):
     #Generate the string, then write it
     for i in range(1, num_chromosomes + 1):
         ref_file.write("\n>chr" + str(i) + "\n")
-        #Generate the string
+        # Generate the string
         for j in range(0, length_chromosome):
             genome += random.choice(nucleo_base_list)
-               
-        for j in range(len(STR)):
-            tmp=random.randint(0, length_chromosome - len(STR[j]))
-            
-            genome = remove_range_from_string(genome, tmp, len(STR[j][1]))
-            genome = insert_to_string(genome, tmp, str(STR[j][1]))
-            STRpos.append([tmp, STR[j][0], STR[j][1]])
+        # Add STRs to the genome
+        # for j in range(len(STR)):
+        #     tmp=random.randint(0, length_chromosome - len(STR[j]))
+        #
+        #     genome = remove_range_from_string(genome, tmp, len(STR[j][1]))
+        #     genome = insert_to_string(genome, tmp, str(STR[j][1]))
+        #     STRpos.append([tmp, STR[j][0], STR[j][1]])
 
         for j in range(0, length_chromosome):
             # write a maximum of 80 alleles per line
