@@ -109,6 +109,8 @@ def map_reads(ref_genome, reads, lookup_table, subseq_length, min_score):
     print "Mapping reads..."
     read_length = 50
     read_map = {}
+    inserts = []
+    deletes = []
     for read in reads:
         if read_length % subseq_length != 0:
             raise Exception("Can't equally subdivide 50 by subseq_length")
@@ -157,7 +159,7 @@ def map_reads(ref_genome, reads, lookup_table, subseq_length, min_score):
                 except KeyError:
                     read_map[best_pos + i] = [str(best[TEST][i])]
 
-    return read_map
+    return read_map, inserts, deletes
 
 
 # def get_num_mismatches(sequence, ref_genome, position):
@@ -228,7 +230,7 @@ def get_consensus_allele(alleles):
     return winner
 
 
-def find_snps(answer_file, ref_genome, ref_name, read_map, thresh=0.6):
+def find_snps(answer_file, ref_genome, read_map, thresh=0.6):
     """
     Finds SNPs with respect to the reference genome and writes the SNPs to the answer
     file.
@@ -243,7 +245,6 @@ def find_snps(answer_file, ref_genome, ref_name, read_map, thresh=0.6):
     # Write the SNPs to the answer file
     # TODO use the thresh param
     print "Finding SNPs..."
-    answer_file.write(">" + ref_name + "\n")
     answer_file.write(">SNP" + "\n")
     for i in range(0, len(ref_genome)):
         ref_allele = ref_genome[i]
@@ -291,7 +292,7 @@ def main():
     answer_key_name += (str(ref_name) + ".txt")
 
     lookup_table = create_lookup_table(ref_genome, seq_length)
-    read_map = map_reads(
+    read_map, inserts, deletes = map_reads(
         ref_genome,
         reads,
         lookup_table,
@@ -300,14 +301,23 @@ def main():
     )
 
     with open(answer_file_name, "w") as answer_file:
+        answer_file.write(">" + ref_name + "\n")
         find_snps(
             answer_file,
             ref_genome,
-            ref_name,
             read_map,
             thresh=snp_thresh
         )
-        # TODO find indels
+
+        # Write inserts
+        answer_file.write(">INSERT:")
+        for i in inserts:
+            answer_file.write("\n" + str(i[0]) + "," + str(i[1]) + "," + str(i[2]))
+
+        # Write deletes
+        answer_file.write("\n>DELETE:")
+        for d in deletes:
+            answer_file.write("\n" + str(d[0]) + "," + str(d[1]) + "," + str(d[2]))
 
     print "DONE\n"
 
