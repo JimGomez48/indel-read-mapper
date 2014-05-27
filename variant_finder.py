@@ -4,7 +4,7 @@ import sys
 from math import *
 
 from paired_end_read import PairedEndRead
-from sequence_aligner import SequenceAligner
+import sequence_aligner
 import Eval
 
 
@@ -12,7 +12,7 @@ import Eval
 allele_alphabet = "ACGT"
 answer_file_name = "myanswers.txt"
 answer_key_name = "ans_genome_test.txt"
-seq_aligner = SequenceAligner()
+# seq_aligner = SequenceAligner()
 
 
 def usage():
@@ -301,7 +301,7 @@ def needleman_wunsch_align(ref_seq, test_seq):
         for col in range(1, cols):
             pass
 
-    seq_aligner.align(ref_seq=ref_seq, test_seq=test_seq)
+    sequence_aligner.align(ref_seq=ref_seq, test_seq=test_seq)
 
     return matrix[rows - 1][cols - 1]
 

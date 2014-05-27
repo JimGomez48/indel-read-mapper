@@ -3,129 +3,128 @@ __author__ = 'james'
 import sys
 
 
-class SequenceAligner:
+class MatrixEntry:
+    DIAG = "DIAG"
+    UP = "UP"
+    LEFT = "LEFT"
 
-    class MatrixEntry:
-        DIAG = "DIAG"
-        UP = "UP"
-        LEFT = "LEFT"
+    def __init__(self, score=0, parent=None):
+        self.score = score
+        self.parent = parent
 
-        def __init__(self, score=0, parent=None):
-            self.score = score
-            self.parent = parent
 
-    def __init__(self):
-        self.matrix = []
+def align(ref_seq, test_seq):
+    """
+    Cubic time algorithm
+    """
+    matrix = __needleman_wunsch_matrix__(ref_seq, test_seq)
+    if matrix is None:
+        return matrix
 
-    def align(self, ref_seq, test_seq):
-        """
-        Cubic time algorithm
-        """
-        self.matrix = self.__needleman_wunsch_matrix__(ref_seq, test_seq)
+    # perform alignment
+    ref_align = ""
+    test_align = ""
+    i = len(matrix) - 1
+    j = len(matrix[0]) - 1
+    while i > 0 or j > 0:
+        current = matrix[i][j]
+        next = current.parent
 
-        # perform alignment
-        ref_align = ""
-        test_align = ""
-        i = len(self.matrix) - 1
-        j = len(self.matrix[0]) - 1
-        while i > 0 or j > 0:
-            current = self.matrix[i][j]
-            next = current.parent
-
-            if next is None:
-                if i == 0:
-                    ref_align += '-'
-                    test_align += test_seq[j - 1]
-                    j -= 1
-                elif j == 0:
-                    ref_align += ref_seq[i - 1]
-                    test_align += '-'
-                    i -= 1
-            elif i > 0 and j > 0 and next == self.MatrixEntry.DIAG:
-                ref_align += ref_seq[i - 1]
-                test_align += test_seq[j - 1]
-                i -= 1
-                j -= 1
-            elif i > 0 and next == self.MatrixEntry.UP:
-                # UP
-                ref_align += ref_seq[i - 1]
-                test_align += "-"
-                i -= 1
-            elif j > 0 and next == self.MatrixEntry.LEFT:
-                # LEFT
-                ref_align += "-"
+        if next is None:
+            if i == 0:
+                ref_align += '-'
                 test_align += test_seq[j - 1]
                 j -= 1
+            elif j == 0:
+                ref_align += ref_seq[i - 1]
+                test_align += '-'
+                i -= 1
+        elif i > 0 and j > 0 and next == MatrixEntry.DIAG:
+            ref_align += ref_seq[i - 1]
+            test_align += test_seq[j - 1]
+            i -= 1
+            j -= 1
+        elif i > 0 and next == MatrixEntry.UP:
+            # UP
+            ref_align += ref_seq[i - 1]
+            test_align += "-"
+            i -= 1
+        elif j > 0 and next == MatrixEntry.LEFT:
+            # LEFT
+            ref_align += "-"
+            test_align += test_seq[j - 1]
+            j -= 1
 
-        ref_align = ref_align[::-1]
-        test_align = test_align[::-1]
-        print "ref-align:  " + ref_align
-        print "test-align: " + test_align
+    ref_align = ref_align[::-1]
+    test_align = test_align[::-1]
+    print "ref-align:  " + ref_align
+    print "test-align: " + test_align
 
-        return ref_align, test_align
+    return ref_align, test_align
 
-    def __needleman_wunsch_matrix__(self, ref_seq, test_seq):
-        """
-        Complexity: O(len(seq1*len(seq2))
-        """
-        gap_score = -1
-        match_score = 1
-        mismatch_score = -1
 
-        rows = len(ref_seq) + 1
-        cols = len(test_seq) + 1
-        self.matrix = []
+def __needleman_wunsch_matrix__(ref_seq, test_seq):
+    """
+    Complexity: O(len(seq1*len(seq2))
+    """
+    gap_score = -1
+    match_score = 1
+    mismatch_score = -1
 
-        # Create the matrix
-        for row in range(0, rows):
-            self.matrix.append(list())
-            for col in range(cols):
-                self.matrix[row].append(self.MatrixEntry())
-        # self.__print_matrix__()
+    rows = len(ref_seq) + 1
+    cols = len(test_seq) + 1
+    matrix = []
 
-        # Initialize first column
-        for row in range(0, rows):
-            self.matrix[row][0].score = row * gap_score
-        # self.__print_matrix__()
+    # Create the matrix
+    for row in range(0, rows):
+        matrix.append(list())
+        for col in range(cols):
+            matrix[row].append(MatrixEntry())
+    # print_matrix(matrix)
 
-        # Initialize first row
-        for col in range(0, cols):
-            self.matrix[0][col].score = col * gap_score
-        # self.__print_matrix__()
+    # Initialize first column
+    for row in range(0, rows):
+        matrix[row][0].score = row * gap_score
+    # print_matrix(matrix)
 
-        # Generate scores and parent pointers
-        for row in range(1, rows):
-            for col in range(1, cols):
-                diag_score = self.matrix[row - 1][col - 1].score          # MATCH
-                top_score = self.matrix[row - 1][col].score + gap_score   # DELETE
-                left_score = self.matrix[row][col - 1].score + gap_score  # INSERT
-                if ref_seq[row - 1] == test_seq[col - 1]:
-                    diag_score += match_score
-                else:
-                    diag_score += mismatch_score
+    # Initialize first row
+    for col in range(0, cols):
+        matrix[0][col].score = col * gap_score
+    # print_matrix(matrix)
 
-                best_score = max(top_score, diag_score, left_score)
-                if best_score == diag_score:    # MATCH
-                    self.matrix[row][col].score = diag_score
-                    # self.matrix[row][col].parent = [row - 1, col - 1]
-                    self.matrix[row][col].parent = self.MatrixEntry.DIAG
-                elif best_score == left_score:  # INSERT
-                    self.matrix[row][col].score = left_score
-                    # self.matrix[row][col].parent = [row, col - 1]
-                    self.matrix[row][col].parent = self.MatrixEntry.LEFT
-                else:                           # DELETE
-                    self.matrix[row][col].score = top_score
-                    # self.matrix[row][col].parent = [row - 1, col]
-                    self.matrix[row][col].parent = self.MatrixEntry.UP
+    # Generate scores and parent pointers
+    for row in range(1, rows):
+        for col in range(1, cols):
+            diag_score = matrix[row - 1][col - 1].score          # MATCH
+            top_score = matrix[row - 1][col].score + gap_score   # DELETE
+            left_score = matrix[row][col - 1].score + gap_score  # INSERT
+            if ref_seq[row - 1] == test_seq[col - 1]:
+                diag_score += match_score
+            else:
+                diag_score += mismatch_score
 
-        # self.__print_matrix__()
+            best_score = max(top_score, diag_score, left_score)
+            if best_score == diag_score:    # MATCH
+                matrix[row][col].score = diag_score
+                # self.matrix[row][col].parent = [row - 1, col - 1]
+                matrix[row][col].parent = MatrixEntry.DIAG
+            elif best_score == left_score:  # INSERT
+                matrix[row][col].score = left_score
+                # self.matrix[row][col].parent = [row, col - 1]
+                matrix[row][col].parent = MatrixEntry.LEFT
+            else:                           # DELETE
+                matrix[row][col].score = top_score
+                # self.matrix[row][col].parent = [row - 1, col]
+                matrix[row][col].parent = MatrixEntry.UP
+    print_matrix(matrix)
 
-        return self.matrix
+    return matrix
 
-    def __print_matrix__(self):
-        for i in range(0, len(self.matrix)):
-            sys.stdout.write("[ ")
-            for j in range(0, len(self.matrix[0])):
-                sys.stdout.write(str(self.matrix[i][j].score) + " ")
-            sys.stdout.write("]\n")
-        print
+
+def print_matrix(matrix):
+    for i in range(0, len(matrix)):
+        sys.stdout.write("[ ")
+        for j in range(0, len(matrix[0])):
+            sys.stdout.write(str(matrix[i][j].score).zfill(3) + " ")
+        sys.stdout.write("]\n")
+    print
