@@ -8,7 +8,7 @@ import sys
 
 # ########################
 #
-# To run: python Eval.py studentAnswers.txt genomeX
+# To run: python eval.py studentAnswers.txt genomeX
 #
 # #####################
 
@@ -342,7 +342,7 @@ def COPYgrade ( stud, key, index):
                             if align_score < 0:
                                 align_score = 0
                             adj_score = (float(align_score)/(max_align_score)) #normalize to 0 to 1
-                            score += adj_score / 2
+                            correct += adj_score / 2
                             done=1
                             break
                 if(done==1):
@@ -476,15 +476,17 @@ def ASSEMBLYgrade(stud, key, index):
 
     for i in range(len(startPos)):
         seq = longest_increasing_subsequence(startPos[i])
+        print seq
         count=0
-        fullRange.append([seq[0],seq[-1]+50])
+        if len(seq)!=0:
+            fullRange.append([seq[0],seq[-1]+50])
         
     listed=fullRange
     listed.sort(key= lambda listed:(int(listed[0])))
     
     covScore, overlap= findCoverage(listed, len(key_answers))
     
-    return covScore*0.5 + 0.5*max(1-float(overlap)/len(key_answers),0)
+    return covScore - 0.5*max(min(1,float(overlap)/len(key_answers)),0)
     '''
         
     fullRange.sort(key= lambda fullRange:(int(fullRange[1])-int(fullRange[0])), reverse=True)
@@ -529,46 +531,44 @@ def Eval(answerKey, studentAns):
     for i in range(0,len(studAns)-1):
         if (studAns[i][0:5]==">COPY"):
             copyGrade=COPYgrade(studAns,ansKey,i+1)
-            #print "COPY grade: " + str(copyGrade)
+            print "COPY grade: " + str(copyGrade)
         if (studAns[i][0:10]==">INVERSION"):
             invGrade=INVgrade(studAns,ansKey,i+1)
-            #print "INVERSIONS grade: "+ str(invGrade)
+            print "INVERSIONS grade: "+ str(invGrade)
         if (studAns[i][0:7]==">INSERT"):
             insertGrade =INDELgrade(studAns,ansKey,i+1, ">INSERT")
-            #print "INSERTIONS grade: "+ str(insertGrade)
+            print "INSERTIONS grade: "+ str(insertGrade)
         if (studAns[i][0:7]==">DELETE"):
             deleteGrade=INDELgrade(studAns,ansKey,i+1, ">DELETE")
-            #print "DELETIONS grade: "+ str(deleteGrade)
+            print "DELETIONS grade: "+ str(deleteGrade)
         if (studAns[i][0:4]==">SNP"):
             snpGrade=SNPgrade(studAns,ansKey,i+1)
-            #print "SNP grade: "+ str(snpGrade)
+            print "SNP grade: "+ str(snpGrade)
         if (studAns[i][0:4]==">STR"):
             strGrade=STRgrade(studAns,ansKey,i+1)
-            #print "STR grade: "+ str(strGrade)
+            print "STR grade: "+ str(strGrade)
         if (studAns[i][0:4]==">ALU"):
             aluGrade=INDELgrade(studAns,ansKey,i+1, ">ALU")
+            print "ALU grade: "+str(aluGrade)
         if (studAns[i][0:9]==">ASSEMBLY"):
             assGrade=ASSEMBLYgrade(studAns,ansKey, i+1)
+            print "ASS grade: "+str(assGrade)
 
     grades = {'SNP': snpGrade,'INDEL':(insertGrade+deleteGrade)/2,'COPY': copyGrade, 'INV': invGrade,
               'STR': strGrade, 'ALU': aluGrade, 'ASS':assGrade}
     return grades
 
-
-def usage():
-    print "USAGE: " + str(sys.argv[0]) + " <stud-key> <ans-key>"
-
-
 def main():
-    if (len(sys.argv)) < 3:
-        usage()
-        sys.exit(1)
-
+    # studentAns = open("test_greedyprim_genomeCPSTR.txt", "r")
+    # answerKey = open("ans_genomeCPSTR.txt", "r")
+    # test= Eval(answerKey,studentAns)
+    # for key in test:
+    #     print key + ' grade: ' + str(test[key])
     studentAns = open(sys.argv[1], "r")
     answerKey = open(sys.argv[2], "r")
     test = Eval(answerKey, studentAns)
-    for key in test:
-        print key + ' grade: ' + str(test[key])
+    # for key in test:
+    #     print key + ' grade: ' + str(test[key])
 
 
 if __name__ == '__main__':

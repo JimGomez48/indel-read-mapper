@@ -5,18 +5,16 @@ from math import *
 
 from paired_end_read import PairedEndRead
 import sequence_aligner
-import Eval
-
+import eval
 
 
 allele_alphabet = "ACGT"
 answer_file_name = "myanswers.txt"
-answer_key_name = "ans_genome_test.txt"
-# seq_aligner = SequenceAligner()
+answer_key_name = "ans_"
 
 
 def usage():
-    print "USAGE: " + sys.argv[0] + " <ref-genome file> <reads file>"
+    print "USAGE: " + sys.argv[0] + " <genome ID>"
 
 
 def error_die(msg):
@@ -113,7 +111,7 @@ def create_read_map(ref_genome, reads, lookup_table, subseq_length, thresh):
     read_map = {}
     for read in reads:
         if read_length % subseq_length != 0:
-            raise Exception("Can't equally subdivide read by subseq_length")
+            raise Exception("Can't equally subdivide 50 by subseq_length")
 
         # subdivide the read into smaller sub-sequences for perfect-match hashing
         # then collect the candidate positions of the read in a list
@@ -256,74 +254,26 @@ def find_deletions():
     pass
 
 
-def needleman_wunsch_align(ref_seq, test_seq):
-    """
-    Complexity: O(len(seq1*len(seq2))
-
-    :param ref_seq:
-    :param test_seq:
-    :return:
-    """
-    gap_score = -2
-    match_score = 1
-    mismatch_score = -1
-
-    rows = len(ref_seq) + 1
-    cols = len(test_seq) + 1
-    matrix = []
-
-    for row in range(rows):
-        matrix.append(list())
-        for col in range(cols):
-            matrix[row].append(0)
-
-    #initialize first column
-    for row in range(rows):
-        matrix[row][0] = row * gap_score
-
-    #initalize first row
-    for col in range(cols):
-        matrix[0][col] = col * gap_score
-
-    for row in range(1, rows):
-        for col in range(1, cols):
-            diag = matrix[row - 1][col - 1]     # MATCH
-            top = matrix[row - 1][col]          # DELETE
-            left = matrix[row][col - 1]         # INSERT
-            if ref_seq[row - 1] == test_seq[col - 1]:
-                diag_score = match_score
-            else:
-                diag_score = mismatch_score
-            max_val = max(top + gap_score, diag + diag_score, left + gap_score)
-            matrix[row][col] = max_val
-
-    for row in range(1, rows):
-        for col in range(1, cols):
-            pass
-
-    sequence_aligner.align(ref_seq=ref_seq, test_seq=test_seq)
-
-    return matrix[rows - 1][cols - 1]
-
-
 def main():
     # ALGORITHM VARIABLES
+    global answer_key_name
     seq_length = 10
     snp_thresh = 2
     paired_end = False
 
     # ensure correct number of arguments
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 2:
         usage()
         sys.exit(1)
 
-    ref_filename = sys.argv[1]
-    reads_filename = sys.argv[2]
+    ref_filename = "ref_" + str(sys.argv[1]) + ".txt"
+    reads_filename = "reads_" + str(sys.argv[1]) + ".txt"
 
     ref_name, ref_genome = load_genome(ref_filename)
     reads_name, reads = load_reads(reads_filename, paired_end=paired_end)
     if ref_name != reads_name:
         error_die("Reference genome id and reads genome id do not match")
+    answer_key_name += (str(ref_name) + ".txt")
 
     lookup_table = create_lookup_table(ref_genome, seq_length)
     read_map = create_read_map(
@@ -341,21 +291,25 @@ def main():
     print "DONE\n"
 
 
-def eval():
-    studentAns = open(answer_file_name, "r")
-    answerKey = open(answer_key_name, "r")
-    test = Eval.Eval(answerKey, studentAns)
-    for key in test:
-        print key + ' grade: ' + str(test[key])
-    studentAns.close()
-    answerKey.close()
+def run_eval():
+    try:
+        student_ans = open(answer_file_name, "r")
+        answer_key = open(answer_key_name, "r")
+        test = eval.Eval(answer_key, student_ans)
+        for key in test:
+            print key + ' grade: ' + str(test[key])
+        student_ans.close()
+        answer_key.close()
+    except IOError as e:
+        sys.stderr.write("Couldn't open answer key \'" + answer_key_name + "\'\n")
+        sys.stderr.write(e.message + "\n")
 
 
 # RUN MAIN
 if __name__ == '__main__':
-    needleman_wunsch_align(
-        ref_seq="ACTGGACGT",
-        test_seq="GCGGACGAAGT"
+    sequence_aligner.align(
+        ref_seq="TACTGGATGA",
+        test_seq="TTGGATGCTA"
     )
     main()
-    eval()
+    run_eval()

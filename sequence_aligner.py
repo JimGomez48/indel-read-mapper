@@ -15,9 +15,12 @@ class MatrixEntry:
 
 def align(ref_seq, test_seq):
     """
+    Uses the Needleman-Wunsch alignment algorithm to align the two sequences with
+    minimal errors.
+
     Cubic time algorithm
     """
-    matrix = __needleman_wunsch_matrix__(ref_seq, test_seq)
+    matrix, score = __needleman_wunsch_matrix__(ref_seq, test_seq)
     if matrix is None:
         return matrix
 
@@ -57,19 +60,22 @@ def align(ref_seq, test_seq):
 
     ref_align = ref_align[::-1]
     test_align = test_align[::-1]
+    score = float(score) / len(ref_align)  # Normalize the score
     print "ref-align:  " + ref_align
     print "test-align: " + test_align
+    print "score: " + str(score)
+    print
 
-    return ref_align, test_align
+    return ref_align, test_align, score
 
 
 def __needleman_wunsch_matrix__(ref_seq, test_seq):
     """
     Complexity: O(len(seq1*len(seq2))
     """
-    gap_score = -1
     match_score = 1
     mismatch_score = -1
+    gap_score = -1
 
     rows = len(ref_seq) + 1
     cols = len(test_seq) + 1
@@ -106,19 +112,17 @@ def __needleman_wunsch_matrix__(ref_seq, test_seq):
             best_score = max(top_score, diag_score, left_score)
             if best_score == diag_score:    # MATCH
                 matrix[row][col].score = diag_score
-                # self.matrix[row][col].parent = [row - 1, col - 1]
                 matrix[row][col].parent = MatrixEntry.DIAG
             elif best_score == left_score:  # INSERT
                 matrix[row][col].score = left_score
-                # self.matrix[row][col].parent = [row, col - 1]
                 matrix[row][col].parent = MatrixEntry.LEFT
             else:                           # DELETE
                 matrix[row][col].score = top_score
-                # self.matrix[row][col].parent = [row - 1, col]
                 matrix[row][col].parent = MatrixEntry.UP
-    print_matrix(matrix)
+    # print_matrix(matrix)
+    align_score = matrix[rows - 1][cols - 1].score
 
-    return matrix
+    return matrix, align_score
 
 
 def print_matrix(matrix):
