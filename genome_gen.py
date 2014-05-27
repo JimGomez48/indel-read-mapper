@@ -37,6 +37,7 @@ def copy_to_string(arr, index, size):
         arr = insert_to_string(arr, index[i], arr1)
     return arr
 
+
 def generate_STR(length):    
     STR=[]
     for i in range(int(length*0.0001)):
@@ -48,6 +49,7 @@ def generate_STR(length):
         STR.append([temp,temp*copies])
     return STR
 
+
 def generate_ref_genome(genome_id, num_chromosomes, length_chromosome):
     """
     Generates a random reference genome with the specified number of chromosomes,
@@ -57,11 +59,11 @@ def generate_ref_genome(genome_id, num_chromosomes, length_chromosome):
     ref_file = open("ref_" + genome_id + ".txt", "w")
     ref_file.write(">" + str(genome_id))
 
-    genome=[]
-    STR=generate_STR(length_chromosome);
+    genome = []
+    STR=generate_STR(length_chromosome)
         
-    STRpos=[]
-    genome=''
+    STRpos = []
+    genome = ''
     #
     #    
     #Generate the string, then write it
@@ -69,14 +71,14 @@ def generate_ref_genome(genome_id, num_chromosomes, length_chromosome):
         ref_file.write("\n>chr" + str(i) + "\n")
         #Generate the string
         for j in range(0, length_chromosome):
-            genome+=random.choice(nucleo_base_list)
+            genome += random.choice(nucleo_base_list)
                
         for j in range(len(STR)):
-            tmp=random.randint(0,length_chromosome-len(STR[j]))
+            tmp=random.randint(0, length_chromosome - len(STR[j]))
             
-            genome=  remove_range_from_string(genome, tmp, len(STR[j][1]))
-            genome = insert_to_string(genome, tmp, str(STR[j][1]) )           
-            STRpos.append([tmp,STR[j][0],STR[j][1]])
+            genome = remove_range_from_string(genome, tmp, len(STR[j][1]))
+            genome = insert_to_string(genome, tmp, str(STR[j][1]))
+            STRpos.append([tmp, STR[j][0], STR[j][1]])
 
         for j in range(0, length_chromosome):
             # write a maximum of 80 alleles per line
@@ -88,8 +90,7 @@ def generate_ref_genome(genome_id, num_chromosomes, length_chromosome):
     print "Reference genome complete"
     ref_file.close()
 
-    return (ref_file,STRpos)
-
+    return (ref_file, STRpos)
 
 
 def invert_str(arr, index, size):
@@ -98,14 +99,16 @@ def invert_str(arr, index, size):
     arr = insert_to_string(arr, index, arr1[::-1])
     return arr, arr1
 
+
 def usage(name):
     print "USAGE: python " + str(
         name) + " <genome_id> <#chromosomes> <chromosome_size x 1M>"
 
+
 def modSTR(genome, STR):
-    fullSTR=[]
-    INS=[]
-    DEL=[]    
+    fullSTR = []
+    INS = []
+    DEL = []
 
     for j in range(len(STR)):
         tmp=random.randint(-2,2)
@@ -122,14 +125,14 @@ def modSTR(genome, STR):
             for k in range(len(STR[j][1])):
                 tmpStr+=random.choice(nucleo_base_list)    
 
-            genome = remove_range_from_string(genome, int(STR[j][0]), -tmp*len(STR[j][1]))
+            genome = remove_range_from_string(genome, int(STR[j][0]), -tmp * len(STR[j][1]))
             genome = insert_to_string(genome, int(STR[j][0]), -tmp*tmpStr)
             
             INS.append([tmpStr,str(STR[j][0])])
             
             fullSTR.append([str(STR[j][0]), str(STR[j][1]), str(STR[j][2][-tmp*len(STR[j][1]):])])
             
-        if(tmp==0):
+        if(tmp == 0):
             fullSTR.append([str(STR[j][0]), str(STR[j][1]), str(STR[j][2])])
             
     fullSTR = sorted(fullSTR, key=lambda fullSTR: int(fullSTR[:][0])) 
@@ -190,7 +193,7 @@ for chromosome in range(1, num_chromosomes + 1):
             break
         baseFileList += str(line)
     
-    baseFileList=baseFileList.replace("\n","")
+    baseFileList=baseFileList.replace("\n", "")
     
     #Modify the STRs
     # baseFileList, insList, delList, strList=modSTR(baseFileList,STR)
@@ -372,29 +375,28 @@ for chromosome in range(1, num_chromosomes + 1):
         randomReadCondition = random.random()
 
         #Throw in an error in 1% of the read length 200
-        errors = int(0.01 * 200)
+        # errors = int(0.01 * 200)
+        # for i in range(0, errors):
+        #     #pick an index
+        #     randomIndex = random.randint(0, 99)
+        #     if randomIndex < 50:
+        #         pass
+        #     else:
+        #         randomIndex += randomGap - 50
+        #
+        #     randomReadError = random.choice(nucleo_base_list)
+        #     while randomReadError == readList[randomIndex]:
+        #         randomReadError = random.choice(nucleo_base_list)
 
-        for i in range(0, errors):
-            #pick an index
-            randomIndex = random.randint(0, 99)
-            if randomIndex < 50:
-                pass
-            else:
-                randomIndex += randomGap - 50
-
-            randomReadError = random.choice(nucleo_base_list)
-            while randomReadError == readList[randomIndex]:
-                randomReadError = random.choice(nucleo_base_list)
-
-                #Full Garbage Read
-        if 0.01 < randomReadCondition < 0.11:
-            readList = ""
-            for i in range(0, 50):
-                readList += (random.choice(nucleo_base_list) )
-            for i in range(0, randomGap):
-                readList += '-'
-            for i in range(50, 100):
-                readList += random.choice(nucleo_base_list)
+        #Full Garbage Read
+        # if 0.01 < randomReadCondition < 0.11:
+        #     readList = ""
+        #     for i in range(0, 50):
+        #         readList += (random.choice(nucleo_base_list) )
+        #     for i in range(0, randomGap):
+        #         readList += '-'
+        #     for i in range(50, 100):
+        #         readList += random.choice(nucleo_base_list)
         
         #for i in range(0, 10):
         #    readList += random.choice(nucleo_base_list)    
@@ -402,7 +404,7 @@ for chromosome in range(1, num_chromosomes + 1):
             
         readsFile.write(str(readList[:50]))
         readsFile.write(',')
-        readsFile.write(str(readList[50 + randomGap:randomGap+100]))
+        readsFile.write(str(readList[50 + randomGap:randomGap + 100]))
         readsFile.write("\n")
 
 
@@ -453,26 +455,39 @@ except IndexError:
     pass
 
 #inserts
-baseAnswerFile.write(">INSERT:\n")
-for i in range(0, num_chromosomes):
-    for j in range(0, len(fullINS[i])):
-        baseAnswerFile.write(str(i + 1) + "," + str(fullINS[i][j][0]) + "," + str(fullINS[i][j][1]))
-        baseAnswerFile.write("\n")
-        #deletes
-baseAnswerFile.write(">DELETE:\n")
-for i in range(0, num_chromosomes):
-    for j in range(0, len(fullDEL[i])):
-        baseAnswerFile.write(
-            str(i + 1) + "," + str(fullDEL[i][j][0]) + "," + str(fullDEL[i][j][1]))
-        baseAnswerFile.write("\n")
+try:
+    fullINS[0]
+    baseAnswerFile.write(">INSERT:\n")
+    for i in range(0, num_chromosomes):
+        for j in range(0, len(fullINS[i])):
+            baseAnswerFile.write(str(i + 1) + "," + str(fullINS[i][j][0]) + "," + str(fullINS[i][j][1]))
+            baseAnswerFile.write("\n")
+except IndexError:
+    pass
 
+#deletes
+try:
+    fullDEL[0]
+    baseAnswerFile.write(">DELETE:\n")
+    for i in range(0, num_chromosomes):
+        for j in range(0, len(fullDEL[i])):
+            baseAnswerFile.write(
+                str(i + 1) + "," + str(fullDEL[i][j][0]) + "," + str(fullDEL[i][j][1]))
+            baseAnswerFile.write("\n")
+except IndexError:
+    pass
         #snps
-baseAnswerFile.write(">SNP")
-for i in range(0, num_chromosomes):
-    for j in range(0, len(fullSNP[i])):
-        baseAnswerFile.write("\n" + str(i + 1) + "," + str(fullSNP[i][j][0]) + ',')
-        baseAnswerFile.write(str(fullSNP[i][j][1]) + ',')
-        baseAnswerFile.write(str(fullSNP[i][j][2]))
+
+try:
+    fullSNP[0]
+    baseAnswerFile.write(">SNP")
+    for i in range(0, num_chromosomes):
+        for j in range(0, len(fullSNP[i])):
+            baseAnswerFile.write("\n" + str(i + 1) + "," + str(fullSNP[i][j][0]) + ',')
+            baseAnswerFile.write(str(fullSNP[i][j][1]) + ',')
+            baseAnswerFile.write(str(fullSNP[i][j][2]))
+except IndexError:
+    pass
 
 baseAnswerFile.close()
 readsFile.close()
