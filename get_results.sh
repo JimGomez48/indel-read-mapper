@@ -1,6 +1,6 @@
 #!/bin/bash
 
-./gen_result_files.sh
+./gen_result_files_$1k.sh
 
 python find_variants.py test10
 python find_variants.py test20

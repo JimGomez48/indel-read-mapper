@@ -178,6 +178,7 @@ def main():
     total_time = time.clock() - start_time
     print "Seconds: " + str(total_time)
     print "Minutes: " + str(total_time/60.0)
+    print
 
     run_eval()
     print "DONE\n"
@@ -189,7 +190,8 @@ def run_eval():
             with open(answer_key_name, "r") as answer_key:
                 print "EVALUATION"
                 print "=========="
-                eval.Eval(answer_key, student_ans)
+                grades = eval.Eval(answer_key, student_ans)
+                print "INDEL grade:\t" + str(grades["INDEL"])
     except IOError as e:
         sys.stderr.write("Couldn't open answer key \'" + answer_key_name + "\'\n")
         sys.stderr.write(e.message + "\n")
