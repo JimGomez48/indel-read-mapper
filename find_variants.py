@@ -5,7 +5,7 @@ The main module used to re-sequence and find variants in a donor genome
 __author__ = 'James Gomez'
 
 import sys
-import math
+import time
 
 from paired_end_read import PairedEndRead
 import indel
@@ -14,7 +14,7 @@ import eval
 
 
 allele_alphabet = "ACGT"
-answer_file_name = "myanswers.txt"
+answer_file_name = "myanswers_"
 answer_key_name = "ans_"
 
 
@@ -112,6 +112,7 @@ def create_lookup_table(genome, seq_length):
 
 def main():
     global answer_key_name
+    global answer_file_name
     if len(sys.argv) < 2:  # ensure correct args
         usage()
         sys.exit(1)
@@ -128,6 +129,7 @@ def main():
     if ref_name != reads_name:
         error_die("Reference genome id and reads genome id do not match")
     answer_key_name += (str(ref_name) + ".txt")
+    answer_file_name += (str(ref_name) + ".txt")
 
     ############################# START MAIN ALGORITHM ##############################
 
@@ -137,6 +139,7 @@ def main():
     snp_thresh = 0.6
     local_alignment = True
 
+    start_time = time.clock()
     lookup_table = create_lookup_table(ref_genome, seq_length)
     read_map, inserts, deletes = indel.find_indels_read_map(
         ref_genome,
@@ -172,7 +175,11 @@ def main():
             lookup_table,
             thresh=snp_thresh
         )
+    total_time = time.clock() - start_time
+    print "Seconds: " + str(total_time)
+    print "Minutes: " + str(total_time/60.0)
 
+    run_eval()
     print "DONE\n"
 
 
@@ -190,4 +197,3 @@ def run_eval():
 
 if __name__ == '__main__':
     main()
-    run_eval()
