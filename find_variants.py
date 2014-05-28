@@ -110,49 +110,6 @@ def create_lookup_table(genome, seq_length):
     return lookup_table
 
 
-# def get_num_mismatches(sequence, ref_genome, position):
-#     """
-#     Returns the number of mismatches between the reference genome starting at the
-#     specified position and the given sequence.
-#     Complexity: O(len(sequence))
-#
-#     :param sequence: the sub-sequence to test against the reference
-#     :param ref_genome: the reference genome to be tested against  the sequence
-#     :param position: the position in the reference to compare with the sequence
-#     """
-#     num_mismatches = 0
-#     for i in range(0, len(sequence)):
-#         if position + i >= len(ref_genome):
-#             break
-#         if sequence[i] != ref_genome[position + i]:
-#             num_mismatches += 1
-#
-#     return num_mismatches
-
-
-# def get_best_read_position(ref_genome, read, positions, max_mismatches):
-#     """
-#     Maps the given read to the best position in the reference genome, if possible.
-#     Returns the best matching position in the reference genome, or None if no match
-#     is found.
-#     Complexity: O(m*n) m is number of positions, n is the length of the read
-#
-#     :param ref_genome: the reference genome
-#     :param read: the read to be mapped to the reference
-#     :param positions: the positions in the reference genome to test the read against
-#     :param max_mismatches: the max allowed mismatches
-#     """
-#     least = 100
-#     best_pos = None
-#     for p in positions:
-#         num_mismatches = get_num_mismatches(read, ref_genome, p)
-#         if num_mismatches < max_mismatches and num_mismatches < least:
-#             least = num_mismatches
-#             best_pos = p
-#
-#     return best_pos
-
-
 def main():
     global answer_key_name
     if len(sys.argv) < 2:  # ensure correct args
@@ -211,7 +168,8 @@ def main():
         snp.find_and_write_snps(
             answer_file,
             ref_genome,
-            read_map,
+            reads,
+            lookup_table,
             thresh=snp_thresh
         )
 

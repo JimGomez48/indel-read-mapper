@@ -13,7 +13,7 @@ __min_consensus__ = 6
 
 def find_indels_read_map(ref_genome, reads, lookup_table, subseq_length, min_score,
                          coverage, local=False):
-    print "Finding indels and building read-map..."
+    print "Finding indels..."
     read_length = 50
     read_map = {}
     insert_map = {}
@@ -74,13 +74,13 @@ def find_indels_read_map(ref_genome, reads, lookup_table, subseq_length, min_sco
                         delete_map[d[0]] = [d[1]]
 
             # Insert read aligned with gaps
-            for i in range(0, len(best[TEST])):
-                if best[TEST][i] == '-':  # skip gaps
-                    continue
-                try:
-                    read_map[best_pos + i].append(str(best[TEST][i]))
-                except KeyError:
-                    read_map[best_pos + i] = [str(best[TEST][i])]
+            # for i in range(0, len(best[TEST])):
+            #     if best[TEST][i] == '-':  # skip gaps
+            #         continue
+            #     try:
+            #         read_map[best_pos + i].append(str(best[TEST][i]))
+            #     except KeyError:
+            #         read_map[best_pos + i] = [str(best[TEST][i])]
 
             # Insert read without gaps
             # for i in range(len(read)):
@@ -217,4 +217,3 @@ def __get_consensus_pos__(positions, coverage):
         winner = None
 
     return winner
-
