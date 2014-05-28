@@ -8,7 +8,11 @@ __author__ = 'James'
 import seq_align
 
 
-def find_indels_read_map(ref_genome, reads, lookup_table, subseq_length, min_score):
+__min_consensus__ = 6
+
+
+def find_indels_read_map(ref_genome, reads, lookup_table, subseq_length, min_score,
+                         coverage, local=False):
     print "Finding indels and building read-map..."
     read_length = 50
     read_map = {}
@@ -47,7 +51,7 @@ def find_indels_read_map(ref_genome, reads, lookup_table, subseq_length, min_sco
             current = seq_align.align(
                 ref_seq=ref_genome[p:p + len(read)],
                 test_seq=read,
-                local=False
+                local=local
             )
             if current[SCORE] > best[SCORE] and current[SCORE] > min_score:
                 best = current
@@ -69,7 +73,7 @@ def find_indels_read_map(ref_genome, reads, lookup_table, subseq_length, min_sco
                     except KeyError:
                         delete_map[d[0]] = [d[1]]
 
-            # Add aligned read to read map
+            # Insert read aligned with gaps
             for i in range(0, len(best[TEST])):
                 if best[TEST][i] == '-':  # skip gaps
                     continue
@@ -78,8 +82,15 @@ def find_indels_read_map(ref_genome, reads, lookup_table, subseq_length, min_sco
                 except KeyError:
                     read_map[best_pos + i] = [str(best[TEST][i])]
 
-    inserts = __resolve_inserts__(insert_map)
-    deletes = __resolve_deletes__(delete_map)
+            # Insert read without gaps
+            # for i in range(len(read)):
+            #     c = read[i]
+            #     try:
+            #         read_map[best_pos + i].append(c)
+            #     except KeyError:
+            #         read_map[best_pos + i] = [c]
+
+    inserts, deletes = __resolve_indels__(insert_map, delete_map, coverage)
 
     return read_map, inserts, deletes
 
@@ -147,11 +158,63 @@ def __find_indels__(ref_seq, test_seq, start_pos):
     return inserts, deletes
 
 
-def __resolve_inserts__(insert_map):
+def __resolve_indels__(insert_map, delete_map, coverage):
     inserts = []
-    return inserts
+    keys = insert_map.keys()
+    for k in keys:
+        positions = insert_map[k]
+        p = __get_consensus_pos__(positions, coverage)
+        if not p is None:
+            inserts.append((k, p))
 
-
-def __resolve_deletes__(delete_map):
     deletes = []
-    return deletes
+    keys = delete_map.keys()
+    for k in keys:
+        positions = delete_map[k]
+        p = __get_consensus_pos__(positions, coverage)
+        if not p is None:
+            deletes.append((k, p))
+
+    return inserts, deletes
+
+
+# def __collapse_map__(map):
+#     collapsed_map = {}
+#
+#     keys = map.keys()
+#     for k in keys:
+#         pos_map = {}
+#         positions = map[k]
+#         for p in positions:
+#             try:
+#                 pos_map[p] += 1
+#             except KeyError:
+#                 pos_map[p] = 1
+#         collapsed_map[k] = pos_map
+#
+#     return collapsed_map
+
+
+def __get_consensus_pos__(positions, coverage):
+    min_count = 5
+
+    position_counts = {}
+    for a in positions:
+        try:
+            position_counts[a] += 1
+        except KeyError:
+            position_counts[a] = 1
+
+    keys = position_counts.keys()
+    win_count = 0
+    winner = None
+    for k in keys:
+        if position_counts[k] > win_count:
+            winner = k
+            win_count = position_counts[k]
+
+    if win_count < min_count:
+        winner = None
+
+    return winner
+

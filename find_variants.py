@@ -166,15 +166,19 @@ def main():
 
     ref_name, ref_genome = load_genome(ref_filename)
     reads_name, reads = load_reads(reads_filename, paired_end=False)
+    coverage = float(len(reads) * 50) / len(ref_genome)
+    print "\tCoverage: " + str(coverage) + "x"
     if ref_name != reads_name:
         error_die("Reference genome id and reads genome id do not match")
     answer_key_name += (str(ref_name) + ".txt")
 
     ############################# START MAIN ALGORITHM ##############################
+
     # Algorithm Parameters
     seq_length = 10
-    min_align_score = 0.6
+    min_align_score = 0.4
     snp_thresh = 0.6
+    local_alignment = True
 
     lookup_table = create_lookup_table(ref_genome, seq_length)
     read_map, inserts, deletes = indel.find_indels_read_map(
@@ -182,28 +186,34 @@ def main():
         reads,
         lookup_table,
         subseq_length=seq_length,
-        min_score=min_align_score
+        min_score=min_align_score,
+        coverage=coverage,
+        local=local_alignment
     )
 
     ############################ WRITE RESULTS TO FILE ##############################
     with open(answer_file_name, "w") as answer_file:
         answer_file.write(">" + ref_name + "\n")
+
+        # Write inserts
+        answer_file.write(">INSERT:")
+        for i in inserts:
+            answer_file.write("\n1," + str(i[0]) + "," + str(i[1]))
+        answer_file.write("\n")
+
+        # Write deletes
+        answer_file.write(">DELETE:")
+        for d in deletes:
+            answer_file.write("\n1," + str(d[0]) + "," + str(d[1]))
+        answer_file.write("\n")
+
+        # Find and write SNPs
         snp.find_and_write_snps(
             answer_file,
             ref_genome,
             read_map,
             thresh=snp_thresh
         )
-
-        # Write inserts
-        answer_file.write(">INSERT:")
-        for i in inserts:
-            answer_file.write("\n" + str(i[0]) + "," + str(i[1]) + "," + str(i[2]))
-
-        # Write deletes
-        answer_file.write("\n>DELETE:")
-        for d in deletes:
-            answer_file.write("\n" + str(d[0]) + "," + str(d[1]) + "," + str(d[2]))
 
     print "DONE\n"
 
@@ -212,6 +222,8 @@ def run_eval():
     try:
         with open(answer_file_name, "r") as student_ans:
             with open(answer_key_name, "r") as answer_key:
+                print "EVALUATION"
+                print "=========="
                 eval.Eval(answer_key, student_ans)
     except IOError as e:
         sys.stderr.write("Couldn't open answer key \'" + answer_key_name + "\'\n")

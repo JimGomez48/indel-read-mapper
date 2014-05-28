@@ -102,7 +102,7 @@ def invert_str(arr, index, size):
 
 def usage(name):
     print "USAGE: python " + str(
-        name) + " <genome_id> <#chromosomes> <chromosome_size x 1M>"
+        name) + " <genome_id> <#chromosomes> <chromosome_size x 1K> <coverage>"
 
 
 def modSTR(genome, STR):
@@ -141,7 +141,7 @@ def modSTR(genome, STR):
         
         
 ################################# START OF SCRIPT ###################################
-if len(sys.argv) < 4:
+if len(sys.argv) < 5:
     usage(sys.argv[0])
     sys.exit()
 
@@ -150,10 +150,12 @@ genome_id = str(sys.argv[1])
 num_chromosomes = int(sys.argv[2])
 # chromosome_size = int(sys.argv[3]) * 1000000
 chromosome_size = int(sys.argv[3]) * 1000
+coverage = float(sys.argv[4])
 
 print "\ngenome-ID:\t" + genome_id
 print "num-chroms:\t" + str(num_chromosomes)
 print "chrom-size:\t" + str(chromosome_size)
+print "coverage:\t" + str(coverage)
 
 fullCOPYseq = []
 fullCOPY = []
@@ -259,10 +261,10 @@ for chromosome in range(1, num_chromosomes + 1):
 
 
 
-    # Insertions/Deletions, split into sections of 2,000 (0.1% ins/del)
+    # Insertions/Deletions, split into sections of 2,000 (0.5% ins/del)
     # 500 below comes from Sequence length / (Seq. length * 0.1% * 2) = 1 / (0.1% * 2)
     print "\tGenerating indels..."
-    sectionLen = 1000 # int(chromosome_size * 0.001 * 2)
+    sectionLen = 200 # int(chromosome_size * 0.001 * 2)
     for i in range(0, int(chromosome_size / sectionLen)):
 
         # Make deletions in i-th section
@@ -362,7 +364,8 @@ for chromosome in range(1, num_chromosomes + 1):
     # File to hold reads from 1 million char sequence
     print "\tGenerating reads..."
     readsFile.write(">chr" + str(chromosome) + "\n")
-    for i in range(0, int(chromosome_size * 0.15)):
+    coverage /= float(100)
+    for i in range(0, int(chromosome_size * coverage)):
         # First read
         startIndexPart1 = (int(random.random() * (chromosome_size - 210)))
         randomGap = random.randint(90, 110)
