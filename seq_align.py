@@ -1,4 +1,9 @@
-__author__ = 'james'
+"""
+Module used for alignment of two sequences. Can perform both global and local
+alignment
+"""
+
+__author__ = 'James Gomez'
 
 import sys
 
@@ -99,17 +104,14 @@ def __needleman_wunsch__(ref_seq, test_seq):
         matrix.append(list())
         for col in range(cols):
             matrix[row].append(MatrixEntry())
-    # print_matrix(matrix)
 
     # Initialize first column
     for row in range(0, rows):
         matrix[row][0].score = row * gap_score
-    # print_matrix(matrix)
 
     # Initialize first row
     for col in range(0, cols):
         matrix[0][col].score = col * gap_score
-    # print_matrix(matrix)
 
     # Generate scores and parent pointers
     for row in range(1, rows):
@@ -157,17 +159,14 @@ def __smith_waterman__(ref_seq, test_seq):
         matrix.append(list())
         for col in range(cols):
             matrix[row].append(MatrixEntry())
-    # print_matrix(matrix)
 
     # Initialize first column
     for row in range(0, rows):
         matrix[row][0].score = 0
-    # print_matrix(matrix)
 
     # Initialize first row
     for col in range(0, cols):
         matrix[0][col].score = 0
-    # print_matrix(matrix)
 
     # Generate scores and parent pointers
     for row in range(1, rows):

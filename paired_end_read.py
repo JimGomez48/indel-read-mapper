@@ -1,7 +1,15 @@
-__author__ = 'james'
+"""
+Contains the PairedEndRead class
+"""
+
+__author__ = 'James Gomez'
 
 
 class PairedEndRead:
+    """
+    Represents a paired-end read. Stores two sequences with an arbitrarily-sized gap
+    between the two reads
+    """
     def __init__(self, seq1=None, seq2=None):
         self.seq1 = seq1
         self.seq2 = seq2
