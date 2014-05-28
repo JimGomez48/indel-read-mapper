@@ -19,7 +19,7 @@ def align(ref_seq, test_seq, local=False):
     Waterman-Smith local-alignment algorithm. Otherwise, uses the Needleman-Wunsch
     global-alignment algorithm
 
-    both Cubic time  O(n^3)
+    both quadratic time  O(n^2) or O(n*m)
     """
     if local:
         matrix, score = __smith_waterman__(ref_seq, test_seq)
@@ -31,10 +31,10 @@ def align(ref_seq, test_seq, local=False):
     score = float(score) / len(ref_align)  # Normalize the score
     # if 30 < score < 50:
     # if 0.5 < score < 1.0:
-    #     print "ref-align:  " + ref_align
-    #     print "test-align: " + test_align
-    #     print "score: " + str(score)
-    #     print
+        # print "ref-align:  " + ref_align
+        # print "test-align: " + test_align
+        # print "score: " + str(score)
+        # print
 
     return ref_align, test_align, score
 

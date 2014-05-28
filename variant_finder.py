@@ -109,8 +109,8 @@ def map_reads(ref_genome, reads, lookup_table, subseq_length, min_score):
     print "Mapping reads..."
     read_length = 50
     read_map = {}
-    inserts = []
-    deletes = []
+    inserts = {}
+    deletes = {}
     for read in reads:
         if read_length % subseq_length != 0:
             raise Exception("Can't equally subdivide 50 by subseq_length")
@@ -151,6 +151,22 @@ def map_reads(ref_genome, reads, lookup_table, subseq_length, min_score):
                 best_pos = p
 
         if not best_pos is None:
+            # get indels from alignment
+            ins, dels = find_indels(current[REF], current[TEST], best_pos)
+            if not ins is None:   # Inserts
+                for i in ins:
+                    try:
+                        inserts[i[0]].append(i[1])
+                    except KeyError:
+                        inserts[i[0]] = [i[1]]
+            if not dels is None:   # Deletes
+                for d in dels:
+                    try:
+                        deletes[d[0]].append(d[1])
+                    except KeyError:
+                        deletes[d[0]] = [d[1]]
+
+            # Add aligned read to read map
             for i in range(0, len(best[TEST])):
                 if best[TEST][i] == '-':  # skip gaps
                     continue
@@ -261,18 +277,84 @@ def find_snps(answer_file, ref_genome, read_map, thresh=0.6):
             continue
 
 
-def find_indels(seq1, seq2):
-    inserts = []
-    deletes = []
+def find_indels(ref_seq, test_seq, start_pos):
+    inserts = None
+    deletes = None
+
+    # FIND INSERTIONS
+    insert_pos = position = start_pos
+    inside = False
+    insert_found = False
+    current_insert = ""
+    for i in range(len(ref_seq)):
+        ref_c = ref_seq[i]
+        test_c = test_seq[i]
+        if not inside:
+            if ref_c == '-':
+                continue
+            else:
+                inside = True
+        else:
+            if ref_c == '-':
+                if not insert_found:
+                    insert_found = True
+                    insert_pos = position
+                current_insert += test_c
+            else:
+                if not current_insert == "":
+                    if inserts is None:
+                        inserts = []
+                    inserts.append((current_insert, insert_pos))
+                    current_insert = ""
+                insert_found = False
+                position += 1
+
+    # FIND DELETIONS
+    delete_pos = position = start_pos
+    inside = False
+    insert_found = False
+    current_delete = ""
+    for i in range(len(test_seq)):
+        ref_c = ref_seq[i]
+        test_c = test_seq[i]
+        if not inside:
+            if test_c == '-':
+                continue
+            else:
+                inside = True
+        else:
+            if test_c == '-':
+                if not insert_found:
+                    insert_found = True
+                    delete_pos = position
+                current_delete += ref_c
+            else:
+                if not current_delete == "":
+                    if deletes is None:
+                        deletes = []
+                    deletes.append((current_delete, delete_pos))
+                    current_delete = ""
+                insert_found = False
+                position += 1
 
     return inserts, deletes
+
+
+def resolve_inserts(insert_map):
+    inserts = []
+    return inserts
+
+
+def resolve_deletes(delete_map):
+    deletes = []
+    return deletes
 
 
 def main():
     # ALGORITHM VARIABLES
     global answer_key_name
     seq_length = 10
-    min_align_score = 0.95
+    min_align_score = 0.6
     snp_thresh = 0.6
     paired_end = False
 
@@ -292,13 +374,16 @@ def main():
     answer_key_name += (str(ref_name) + ".txt")
 
     lookup_table = create_lookup_table(ref_genome, seq_length)
-    read_map, inserts, deletes = map_reads(
+    read_map, insert_map, delete_map = map_reads(
         ref_genome,
         reads,
         lookup_table,
         subseq_length=seq_length,
         min_score=min_align_score
     )
+
+    inserts = resolve_inserts(insert_map)
+    deletes = resolve_deletes(delete_map)
 
     with open(answer_file_name, "w") as answer_file:
         answer_file.write(">" + ref_name + "\n")
