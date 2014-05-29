@@ -504,7 +504,7 @@ def ASSEMBLYgrade(stud, key, index):
         
     score= min(avgN50/(len(key_answers)/4.0),1)*0.5'''
 
-def Eval(answerKey, studentAns):
+def eval(answerKey, studentAns):
 
     # Open up student answers
     #studentAns = open(sys.argv[1], "r")
@@ -529,40 +529,50 @@ def Eval(answerKey, studentAns):
     answerKey.close()
 
     for i in range(0,len(studAns)-1):
-        if (studAns[i][0:5]==">COPY"):
-            copyGrade=COPYgrade(studAns,ansKey,i+1)
-            print "COPY grade: " + str(copyGrade)
-        if (studAns[i][0:10]==">INVERSION"):
-            invGrade=INVgrade(studAns,ansKey,i+1)
-            print "INVERSIONS grade: "+ str(invGrade)
-        if (studAns[i][0:7]==">INSERT"):
-            insertGrade =INDELgrade(studAns,ansKey,i+1, ">INSERT")
-            print "INSERTIONS grade: "+ str(insertGrade)
-        if (studAns[i][0:7]==">DELETE"):
-            deleteGrade=INDELgrade(studAns,ansKey,i+1, ">DELETE")
-            print "DELETIONS grade: "+ str(deleteGrade)
-        if (studAns[i][0:4]==">SNP"):
-            snpGrade=SNPgrade(studAns,ansKey,i+1)
-            print "SNP grade: "+ str(snpGrade)
-        if (studAns[i][0:4]==">STR"):
-            strGrade=STRgrade(studAns,ansKey,i+1)
-            print "STR grade: "+ str(strGrade)
-        if (studAns[i][0:4]==">ALU"):
-            aluGrade=INDELgrade(studAns,ansKey,i+1, ">ALU")
-            print "ALU grade: "+str(aluGrade)
-        if (studAns[i][0:9]==">ASSEMBLY"):
-            assGrade=ASSEMBLYgrade(studAns,ansKey, i+1)
-            print "ASS grade: "+str(assGrade)
+        if (studAns[i][0:5] == ">COPY"):
+            copyGrade=COPYgrade(studAns, ansKey, i + 1)
+            # print "COPY grade: " + str(copyGrade)
+        if (studAns[i][0:10] == ">INVERSION"):
+            invGrade=INVgrade(studAns, ansKey, i + 1)
+            # print "INVERSIONS grade: "+ str(invGrade)
+        if (studAns[i][0:7] == ">INSERT"):
+            insertGrade =INDELgrade(studAns, ansKey, i + 1, ">INSERT")
+            # print "INSERTIONS grade: "+ str(insertGrade)
+        if (studAns[i][0:7] == ">DELETE"):
+            deleteGrade=INDELgrade(studAns, ansKey, i + 1, ">DELETE")
+            # print "DELETIONS grade: "+ str(deleteGrade)
+        if (studAns[i][0:4] == ">SNP"):
+            snpGrade=SNPgrade(studAns, ansKey, i + 1)
+            # print "SNP grade: "+ str(snpGrade)
+        if (studAns[i][0:4] == ">STR"):
+            strGrade=STRgrade(studAns, ansKey, i + 1)
+            # print "STR grade: "+ str(strGrade)
+        if (studAns[i][0:4] == ">ALU"):
+            aluGrade=INDELgrade(studAns, ansKey, i + 1, ">ALU")
+            # print "ALU grade: "+str(aluGrade)
+        if (studAns[i][0:9] == ">ASSEMBLY"):
+            assGrade=ASSEMBLYgrade(studAns, ansKey, i + 1)
+            # print "ASS grade: "+str(assGrade)
 
-    grades = {'SNP': snpGrade,'INDEL':(insertGrade+deleteGrade)/2,'COPY': copyGrade, 'INV': invGrade,
-              'STR': strGrade, 'ALU': aluGrade, 'ASS':assGrade}
+    grades = {
+        'SNP': snpGrade,
+        'INSERT': insertGrade,
+        'DELETE': deleteGrade,
+        'INDEL': (insertGrade + deleteGrade) / 2,
+        'COPY': copyGrade,
+        'INV': invGrade,
+        'STR': strGrade,
+        'ALU': aluGrade,
+        'ASS': assGrade
+    }
+
     return grades
 
 
 def main():
     student_ans = open(sys.argv[1], "r")
     answer_key = open(sys.argv[2], "r")
-    Eval(answer_key, student_ans)
+    eval(answer_key, student_ans)
 
 
 if __name__ == '__main__':
