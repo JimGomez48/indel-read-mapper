@@ -566,13 +566,24 @@ def eval(answerKey, studentAns):
         'ASS': assGrade
     }
 
+    print "EVALUATION"
+    print "=========="
+    sum = 0
+    keys = grades.keys()
+    for k in keys:
+        grade = grades[k]
+        if grade > 0:
+            print "\t" + str(k) + ":\t " + str(grade)
+            sum += grades[k]
+    print "\tOVERALL: " + str(sum / len(keys))
+
     return grades
 
 
 def main():
     student_ans = open(sys.argv[1], "r")
     answer_key = open(sys.argv[2], "r")
-    eval(answer_key, student_ans)
+    grades = eval(answer_key, student_ans)
 
 
 if __name__ == '__main__':

@@ -133,11 +133,11 @@ def main():
         help="The file containing the reads from the donor genome")
     arg_parser.add_argument(
         '-i', '--indels',
-        help="Search for indels within the donor genome",
+        help="search for indels within the donor genome",
         action="store_true")
     arg_parser.add_argument(
         '-s', '--snps',
-        help="Search for SNPs within the donor genome",
+        help="search for SNPs within the donor genome",
         action="store_true")
     args = arg_parser.parse_args()
     ref_file_name = args.ref_file
@@ -219,17 +219,7 @@ def run_eval():
     try:
         with open(answer_file_name, "r") as student_ans:
             with open(answer_key_name, "r") as answer_key:
-                print "EVALUATION"
-                print "=========="
                 grades = eval.eval(answer_key, student_ans)
-                sum = 0
-                keys = grades.keys()
-                for k in keys:
-                    grade = grades[k]
-                    if grade > 0:
-                        print "\t" + str(k) + ":\t " + str(grade)
-                        sum += grades[k]
-                print "\tOVERALL: " + str(sum / len(keys))
     except IOError as e:
         sys.stderr.write(
             "Couldn't open answer key \'" + answer_key_name + "\'\n")
