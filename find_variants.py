@@ -35,7 +35,9 @@ def load_genome(filename):
         if not ">" in line:
             raise Exception("First line of genome does not begin with \'>\'")
         else:
-            name = str(line.translate(None, ">\r\n"))
+            # name = str(line.translate_v(None, ">\r\n"))
+            name = str(line.rstrip())
+            name = name[1: len(name)]
             print "Loading reference genome \'" + name + "\'..."
 
             for line in ref_file:
@@ -65,7 +67,9 @@ def load_reads(filename, paired_end):
         if not ">" in line:
             raise Exception("First line of genome does not begin with \'>\'")
 
-        name = str(line.translate(None, ">\r\n"))
+        # name = str(line.translate_v(None, ">\r\n"))
+        name = str(line.rstrip())
+        name = name[1: len(name)]
         print "Loading reads from genome \'" + name + "\'..."
 
         for line in reads_file:
@@ -171,31 +175,31 @@ def main():
 
     start_time = time.clock()
     lookup_table = create_lookup_table(ref_genome, seq_length)
-    read_map, inserts, deletes = indel.find_indels_read_map(
-        ref_genome,
-        reads,
-        lookup_table,
-        subseq_length=seq_length,
-        min_score=min_align_score,
-        coverage=coverage,
-        local=local_alignment
-    )
+    # read_map, inserts, deletes = indel.find_indels_read_map(
+    #     ref_genome,
+    #     reads,
+    #     lookup_table,
+    #     subseq_length=seq_length,
+    #     min_score=min_align_score,
+    #     coverage=coverage,
+    #     local=local_alignment
+    # )
 
     ########################## WRITE RESULTS TO FILE ###########################
     with open(answer_file_name, "w") as answer_file:
         answer_file.write(">" + reads_name + "\n")
 
         # Write inserts
-        answer_file.write(">INSERT:")
-        for i in inserts:
-            answer_file.write("\n1," + str(i[0]) + "," + str(i[1]))
-        answer_file.write("\n")
-
-        # Write deletes
-        answer_file.write(">DELETE:")
-        for d in deletes:
-            answer_file.write("\n1," + str(d[0]) + "," + str(d[1]))
-        answer_file.write("\n")
+        # answer_file.write(">INSERT:")
+        # for i in inserts:
+        #     answer_file.write("\n1," + str(i[0]) + "," + str(i[1]))
+        # answer_file.write("\n")
+        #
+        # # Write deletes
+        # answer_file.write(">DELETE:")
+        # for d in deletes:
+        #     answer_file.write("\n1," + str(d[0]) + "," + str(d[1]))
+        # answer_file.write("\n")
 
         # Find and write SNPs
         snp.find_and_write_snps(

@@ -523,7 +523,9 @@ def eval(answerKey, studentAns):
         #if (studAns[i][0:3]==">ID"):
         if (studAns[i][0]==">"):
             filename = studAns[i+1]
-            filename=filename.translate(None,'\n>')
+            # filename=filename.translate_v(None,'\n>')
+            filename = filename.rstrip()
+            filename = filename[1: len(filename)]
     #answerKey = open("ans_"+filename+".txt", "r")
     ansKey = [line.rstrip() for line in answerKey]
     answerKey.close()
